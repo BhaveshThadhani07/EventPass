@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- Locks mobile screen width so it looks like an app -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EventPass</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="phone-box">
+    <h1>EventPass</h1>
+    <p id="seats-text">Seats Left: 50</p>
+
+    <!-- TILE 1: REGISTER -->
+    <div id="tile-register" class="tile">
+      <h3>1. Register</h3>
+      <input id="name" placeholder="Name">
+      <input id="email" placeholder="Email">
+      <select id="diet">
+        <option>Veg</option>
+        <option>Non-Veg</option>
+        <option>Jain</option>
+      </select>
+      <button onclick="registerUser()">Get Pass</button>
+      <p id="reg-msg"></p>
+    </div>
+
+    <!-- TILE 2: SCAN -->
+    <div id="tile-scan" class="tile hidden">
+      <h3>2. Gate / Meal Scan</h3>
+      <select id="scan-type">
+        <option value="gate">Gate Entry</option>
+        <option value="meal">Food Counter</option>
+      </select>
+      <input id="ticket-input" placeholder="Enter Ticket ID">
+      <button onclick="verifyPass()">Verify Pass</button>
+      <p id="scan-msg"></p>
+    </div>
+
+    <!-- TILE 3: ADMIN -->
+    <div id="tile-admin" class="tile hidden">
+      <h3>3. Admin Live Stats</h3>
+      <p id="stats-msg">Loading...</p>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAVIGATION BAR -->
+  <div class="nav">
+    <button onclick="openTile('register')">Register</button>
+    <button onclick="openTile('scan')">Scan</button>
+    <button onclick="openTile('admin')">Admin</button>
+  </div>
+  <script src="app.js"></script>
+
+  
+</body>
+</html>
