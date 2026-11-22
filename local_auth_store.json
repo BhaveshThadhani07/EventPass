@@ -1,0 +1,316 @@
+{
+  "users": [
+    {
+      "id": "usr-org-01",
+      "email": "bhavesh@eventpass.edu",
+      "password_hash": "$2a$10$3DIv.lxlyYmyu4dKb6yesevisSib2nGB/24kpqGPxYw1nCXR5CMqq",
+      "full_name": "Bhavesh Thadhani",
+      "role": "organizer",
+      "pin_code": "9999",
+      "created_at": "2026-11-22T13:30:52.470Z",
+      "updated_at": "2026-11-22T13:30:56.685Z"
+    },
+    {
+      "id": "usr-org-02",
+      "email": "aniket@eventpass.edu",
+      "password_hash": "$2a$10$3DIv.lxlyYmyu4dKb6yesevisSib2nGB/24kpqGPxYw1nCXR5CMqq",
+      "full_name": "Aniket Hinge",
+      "role": "organizer",
+      "pin_code": "8888",
+      "created_at": "2026-11-22T13:30:56.685Z",
+      "updated_at": "2026-11-22T13:30:56.685Z"
+    },
+    {
+      "id": "usr-vol-01",
+      "email": "karan@eventpass.edu",
+      "password_hash": "$2a$10$3DIv.lxlyYmyu4dKb6yeseqczxv5Kfuj8mrjrMVkd7iM7CqQNoMeC",
+      "full_name": "Karan (Desk Volunteer)",
+      "role": "volunteer",
+      "pin_code": "1234",
+      "created_at": "2026-11-22T13:30:56.685Z",
+      "updated_at": "2026-11-22T13:30:56.685Z"
+    },
+    {
+      "id": "usr-att-01",
+      "email": "ananya@eventpass.edu",
+      "password_hash": "$2a$10$3DIv.lxlyYmyu4dKb6yese0XJZL6LaVMig0bSfthEV54wg0LZJ6fC",
+      "full_name": "Ananya Kulkarni",
+      "role": "attendee",
+      "pin_code": "0000",
+      "created_at": "2026-11-22T13:30:56.685Z",
+      "updated_at": "2026-11-22T13:30:56.685Z"
+    },
+    {
+      "id": "usr-mwrvn71n-aux0z",
+      "email": "volunteer_1795354381844@test.edu",
+      "password_hash": "$2a$10$MfQH6lwvP7nEeM4OArg97O8GHrdNXrcr0.E08iPsk.1diPZymFetG",
+      "full_name": "Aarav Patel",
+      "role": "volunteer",
+      "pin_code": "7777",
+      "created_at": "2026-11-22T13:33:01.931Z",
+      "updated_at": "2026-11-22T13:33:01.931Z"
+    },
+    {
+      "id": "usr-mwrvo5w6-64gp7",
+      "email": "user_1795354427012@eventpass.edu",
+      "password_hash": "$2a$10$R4VeikfdQe9A642hdxIs3.K5yupGT8eFCqTXIhgif2YOHh1L/H37O",
+      "full_name": "Test Desk Volunteer",
+      "role": "volunteer",
+      "pin_code": "4321",
+      "created_at": "2026-11-22T13:33:47.094Z",
+      "updated_at": "2026-11-22T13:33:47.094Z"
+    },
+    {
+      "id": "usr-mwrvw4er-mnd7w",
+      "email": "user_1795354798339@eventpass.edu",
+      "password_hash": "$2a$10$5UDlBhKvACxRSPMBFcsLT.02qplFGyzdLKS7Jabk4SE2XF1gWwoFi",
+      "full_name": "Test Desk Volunteer",
+      "role": "volunteer",
+      "pin_code": "4321",
+      "created_at": "2026-11-22T13:39:58.420Z",
+      "updated_at": "2026-11-22T13:39:58.420Z"
+    },
+    {
+      "id": "usr-mwrw12q6-zgyhg",
+      "email": "user_1795355029408@eventpass.edu",
+      "password_hash": "$2a$10$kJG7qS9dRhZu6UXpCGBkP.kul.2S3Z4fqQWCR.KluClvN5XsC86c.",
+      "full_name": "Test Desk Volunteer",
+      "role": "volunteer",
+      "pin_code": "4321",
+      "created_at": "2026-11-22T13:43:49.518Z",
+      "updated_at": "2026-11-22T13:43:49.518Z"
+    },
+    {
+      "id": "usr-mwryglel-f82vi",
+      "email": "bhaveshthadhani7@gmail.com",
+      "password_hash": "$2a$10$Y2yDNAWhm2qMfHt3SXIP1O3S.BXw0eVIt3xCLidljuhfLFjco5e1W",
+      "full_name": "Bhavesh Thadhani",
+      "role": "volunteer",
+      "pin_code": "1234",
+      "created_at": "2026-11-22T14:51:52.798Z",
+      "updated_at": "2026-11-22T14:51:52.798Z"
+    },
+    {
+      "id": "usr-mwryvdyh-kcwpo",
+      "email": "user_1795359802904@eventpass.edu",
+      "password_hash": "$2a$10$teAAA9P6PbMeM3lFiGWKbeuGjBqWzTe6Enqb9PTpxVqWSrrfqjLw2",
+      "full_name": "Test Desk Volunteer",
+      "role": "volunteer",
+      "pin_code": "4321",
+      "created_at": "2026-11-22T15:03:22.985Z",
+      "updated_at": "2026-11-22T15:03:22.985Z"
+    }
+  ],
+  "auditLogs": [
+    {
+      "id": "log-1795359802989",
+      "user_id": "desk-volunteer",
+      "email": "volunteer-desk@eventpass.internal",
+      "action": "PIN_LOGIN",
+      "role": "volunteer",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-22T15:03:22.989Z"
+    },
+    {
+      "id": "log-1795359802986",
+      "user_id": "usr-mwryvdyh-kcwpo",
+      "email": "user_1795359802904@eventpass.edu",
+      "action": "REGISTER",
+      "role": "volunteer",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-22T15:03:22.986Z"
+    },
+    {
+      "id": "log-1795359802903",
+      "user_id": "usr-org-01",
+      "email": "bhavesh@eventpass.edu",
+      "action": "FAILED_LOGIN",
+      "role": "organizer",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-22T15:03:22.903Z"
+    },
+    {
+      "id": "log-1795359802812",
+      "user_id": "usr-org-01",
+      "email": "bhavesh@eventpass.edu",
+      "action": "LOGIN",
+      "role": "organizer",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-22T15:03:22.811Z"
+    },
+    {
+      "id": "log-1795359112812",
+      "user_id": "usr-mwryglel-f82vi",
+      "email": "bhaveshthadhani7@gmail.com",
+      "action": "REGISTER",
+      "role": "volunteer",
+      "ip_address": "::1",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+      "created_at": "2026-11-22T14:51:52.812Z"
+    },
+    {
+      "id": "log-1795355029526",
+      "user_id": "desk-volunteer",
+      "email": "volunteer-desk@eventpass.internal",
+      "action": "PIN_LOGIN",
+      "role": "volunteer",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-22T13:43:49.526Z"
+    },
+    {
+      "id": "log-1795355029519",
+      "user_id": "usr-mwrw12q6-zgyhg",
+      "email": "user_1795355029408@eventpass.edu",
+      "action": "REGISTER",
+      "role": "volunteer",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-22T13:43:49.519Z"
+    },
+    {
+      "id": "log-1795355029406",
+      "user_id": "usr-org-01",
+      "email": "bhavesh@eventpass.edu",
+      "action": "FAILED_LOGIN",
+      "role": "organizer",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-22T13:43:49.406Z"
+    },
+    {
+      "id": "log-1795355029300",
+      "user_id": "usr-org-01",
+      "email": "bhavesh@eventpass.edu",
+      "action": "LOGIN",
+      "role": "organizer",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-22T13:43:49.299Z"
+    },
+    {
+      "id": "log-1795354798425",
+      "user_id": "desk-volunteer",
+      "email": "volunteer-desk@eventpass.internal",
+      "action": "PIN_LOGIN",
+      "role": "volunteer",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-22T13:39:58.425Z"
+    },
+    {
+      "id": "log-1795354798421",
+      "user_id": "usr-mwrvw4er-mnd7w",
+      "email": "user_1795354798339@eventpass.edu",
+      "action": "REGISTER",
+      "role": "volunteer",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-22T13:39:58.421Z"
+    },
+    {
+      "id": "log-1795354798339",
+      "user_id": "usr-org-01",
+      "email": "bhavesh@eventpass.edu",
+      "action": "FAILED_LOGIN",
+      "role": "organizer",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-22T13:39:58.339Z"
+    },
+    {
+      "id": "log-1795354798232",
+      "user_id": "usr-org-01",
+      "email": "bhavesh@eventpass.edu",
+      "action": "LOGIN",
+      "role": "organizer",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-22T13:39:58.231Z"
+    },
+    {
+      "id": "log-1795354427097",
+      "user_id": "desk-volunteer",
+      "email": "volunteer-desk@eventpass.internal",
+      "action": "PIN_LOGIN",
+      "role": "volunteer",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-22T13:33:47.097Z"
+    },
+    {
+      "id": "log-1795354427094",
+      "user_id": "usr-mwrvo5w6-64gp7",
+      "email": "user_1795354427012@eventpass.edu",
+      "action": "REGISTER",
+      "role": "volunteer",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-22T13:33:47.094Z"
+    },
+    {
+      "id": "log-1795354427011",
+      "user_id": "usr-org-01",
+      "email": "bhavesh@eventpass.edu",
+      "action": "FAILED_LOGIN",
+      "role": "organizer",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-22T13:33:47.011Z"
+    },
+    {
+      "id": "log-1795354426929",
+      "user_id": "usr-org-01",
+      "email": "bhavesh@eventpass.edu",
+      "action": "LOGIN",
+      "role": "organizer",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-22T13:33:46.928Z"
+    },
+    {
+      "id": "log-1795354381935",
+      "user_id": "desk-volunteer",
+      "email": "volunteer-desk@eventpass.internal",
+      "action": "PIN_LOGIN",
+      "role": "volunteer",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-22T13:33:01.935Z"
+    },
+    {
+      "id": "log-1795354381932",
+      "user_id": "usr-mwrvn71n-aux0z",
+      "email": "volunteer_1795354381844@test.edu",
+      "action": "REGISTER",
+      "role": "volunteer",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-22T13:33:01.932Z"
+    },
+    {
+      "id": "log-1795354381841",
+      "user_id": "usr-org-01",
+      "email": "bhavesh@eventpass.edu",
+      "action": "FAILED_LOGIN",
+      "role": "organizer",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-22T13:33:01.841Z"
+    },
+    {
+      "id": "log-1795354381726",
+      "user_id": "usr-org-01",
+      "email": "bhavesh@eventpass.edu",
+      "action": "LOGIN",
+      "role": "organizer",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-22T13:33:01.724Z"
+    }
+  ]
+}
