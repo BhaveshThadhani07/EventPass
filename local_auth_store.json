@@ -89,58 +89,28 @@
       "pin_code": "1234",
       "created_at": "2026-11-22T14:51:52.798Z",
       "updated_at": "2026-11-22T14:51:52.798Z"
-    },
-    {
-      "id": "usr-mwryvdyh-kcwpo",
-      "email": "user_1795359802904@eventpass.edu",
-      "password_hash": "$2a$10$teAAA9P6PbMeM3lFiGWKbeuGjBqWzTe6Enqb9PTpxVqWSrrfqjLw2",
-      "full_name": "Test Desk Volunteer",
-      "role": "volunteer",
-      "pin_code": "4321",
-      "created_at": "2026-11-22T15:03:22.985Z",
-      "updated_at": "2026-11-22T15:03:22.985Z"
     }
   ],
   "auditLogs": [
     {
-      "id": "log-1795359802989",
-      "user_id": "desk-volunteer",
-      "email": "volunteer-desk@eventpass.internal",
-      "action": "PIN_LOGIN",
-      "role": "volunteer",
-      "ip_address": "127.0.0.1",
-      "user_agent": "Browser",
-      "created_at": "2026-11-22T15:03:22.989Z"
-    },
-    {
-      "id": "log-1795359802986",
-      "user_id": "usr-mwryvdyh-kcwpo",
-      "email": "user_1795359802904@eventpass.edu",
-      "action": "REGISTER",
-      "role": "volunteer",
-      "ip_address": "127.0.0.1",
-      "user_agent": "Browser",
-      "created_at": "2026-11-22T15:03:22.986Z"
-    },
-    {
-      "id": "log-1795359802903",
-      "user_id": "usr-org-01",
-      "email": "bhavesh@eventpass.edu",
-      "action": "FAILED_LOGIN",
-      "role": "organizer",
-      "ip_address": "127.0.0.1",
-      "user_agent": "Browser",
-      "created_at": "2026-11-22T15:03:22.903Z"
-    },
-    {
-      "id": "log-1795359802812",
-      "user_id": "usr-org-01",
-      "email": "bhavesh@eventpass.edu",
+      "id": "log-1795365582666",
+      "user_id": "usr-mwryglel-f82vi",
+      "email": "bhaveshthadhani7@gmail.com",
       "action": "LOGIN",
-      "role": "organizer",
-      "ip_address": "127.0.0.1",
-      "user_agent": "Browser",
-      "created_at": "2026-11-22T15:03:22.811Z"
+      "role": "volunteer",
+      "ip_address": "::1",
+      "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1",
+      "created_at": "2026-11-22T16:39:42.666Z"
+    },
+    {
+      "id": "log-1795365570532",
+      "user_id": "usr-mwryglel-f82vi",
+      "email": "bhaveshthadhani7@gmail.com",
+      "action": "LOGOUT",
+      "role": "volunteer",
+      "ip_address": "::1",
+      "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1",
+      "created_at": "2026-11-22T16:39:30.532Z"
     },
     {
       "id": "log-1795359112812",
