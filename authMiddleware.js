@@ -10,7 +10,7 @@ function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.startsWith('Bearer ') 
     ? authHeader.split(' ')[1] 
-    : req.headers['x-access-token'] || req.query.token;
+    : req.headers['x-access-token'] || req.query?.token;
 
   if (!token) {
     return res.status(401).json({

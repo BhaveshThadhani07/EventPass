@@ -15,10 +15,10 @@ const jwt = require('jsonwebtoken');
 const { 
   findUserByEmail, 
   findUserById, 
+  findUserByRoleAndPin,
   createUser, 
   logAudit, 
-  isSupabaseConfigured,
-  getLocalUsers 
+  isSupabaseConfigured 
 } = require('./supabaseClient');
 const { authenticateToken, JWT_SECRET } = require('./authMiddleware');
 
@@ -251,9 +251,8 @@ router.post('/pin-login', async (req, res) => {
         pin_code: cleanPin
       };
     } else {
-      // Check if any registered user matches this role & pin
-      const allUsers = getLocalUsers();
-      const found = allUsers.find(u => u.role === targetRole && u.pin_code === cleanPin);
+      // Check if any registered user (Supabase or local) matches this role & pin
+      const found = await findUserByRoleAndPin(targetRole, cleanPin);
       if (found) {
         matchedUser = found;
       }

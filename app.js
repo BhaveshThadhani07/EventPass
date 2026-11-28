@@ -2,15 +2,14 @@
  * EventPass - Main Client Application Logic
  * Integrates:
  * - End-to-end Authentication (Email/Password, Roles, Desk PIN)
- * - IndexedDB Client Persistence for Tickets & Check-ins
+ * - Node.js + Express + Supabase PostgreSQL Backend Persistence
  * - Real-time Crowd & Catering Telemetry
  * - Responsive UI synchronization across desktop, tablet, and mobile
  * - CSV Export
  */
 
-let db;
 const MAX_SEATS = 50;
-const CURRENT_EVENT = {
+let CURRENT_EVENT = {
   id: 'E01',
   name: 'Intro to Web Dev Workshop',
   date: '2026-11-14',
@@ -19,31 +18,53 @@ const CURRENT_EVENT = {
 };
 
 // ----------------------------------------------------
-// 1. IndexedDB Initialization
+// 1. Backend API Helper & Formatting
 // ----------------------------------------------------
-const req = indexedDB.open('EventpassDB', 2);
-
-req.onupgradeneeded = (e) => {
-  db = e.target.result;
-  if (!db.objectStoreNames.contains('tickets')) {
-    const store = db.createObjectStore('tickets', { keyPath: 'ticketId' });
-    store.createIndex('email', 'email', { unique: true });
-    store.createIndex('gateCheckedIn', 'gateCheckedIn', { unique: false });
-    store.createIndex('mealClaimed', 'mealClaimed', { unique: false });
+async function apiFetch(url, options = {}) {
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(options.headers || {})
+  };
+  const token = typeof Auth !== 'undefined' && Auth.getToken ? Auth.getToken() : null;
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
   }
-};
 
-req.onsuccess = (e) => {
-  db = e.target.result;
-  seedInitialAttendeesIfEmpty();
-  updateAdmin();
-  checkBackendStatus();
-};
+  try {
+    const response = await fetch(url, { ...options, headers });
+    const data = await response.json().catch(() => ({}));
+    return { ok: response.ok, status: response.status, data };
+  } catch (err) {
+    console.error(`[API Error] ${url}:`, err);
+    return {
+      ok: false,
+      status: 0,
+      data: { error: 'Network error or backend server is not reachable.' }
+    };
+  }
+}
 
-req.onerror = (e) => {
-  console.error('[IndexedDB] Database failed to open:', e.target.error);
-  showToast('Database storage restricted in this browser session.', 'error');
-};
+function formatTime(value) {
+  if (!value) return '—';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return String(value);
+  return parsed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+async function loadEventCapacity() {
+  const res = await apiFetch('/api/event', { method: 'GET' });
+  if (res.ok && res.data.success) {
+    if (res.data.event) {
+      CURRENT_EVENT = res.data.event;
+      const passEventEl = document.getElementById('pass-event-name');
+      if (passEventEl) passEventEl.textContent = CURRENT_EVENT.name;
+    }
+    const seatsEl = document.getElementById('seats-text');
+    if (seatsEl) {
+      seatsEl.textContent = `Seats Left: ${res.data.seatsRemaining} / ${CURRENT_EVENT.capacity}`;
+    }
+  }
+}
 
 // ----------------------------------------------------
 // 2. Navigation & Role-Based Screen Guarding
@@ -71,7 +92,9 @@ function openTile(name) {
   // Check role locks
   checkTilePermissions();
 
-  if (name === 'admin' || name === 'scan') {
+  if (name === 'register') {
+    loadEventCapacity();
+  } else if (name === 'admin' || name === 'scan') {
     updateAdmin();
   }
 }
@@ -110,33 +133,14 @@ function checkTilePermissions() {
 window.checkTilePermissions = checkTilePermissions;
 
 // ----------------------------------------------------
-// 3. Ticket Generation (Compliant with PRD Section 7)
-// ----------------------------------------------------
-// Base31 alphabet: ABCDEFGHJKMNPQRSTUVWXYZ23456789 (no 0, O, 1, I, L)
-const TICKET_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-
-function generateTicketId() {
-  const bytes = new Uint8Array(8);
-  window.crypto.getRandomValues(bytes);
-  let part1 = '';
-  let part2 = '';
-  for (let i = 0; i < 4; i++) {
-    part1 += TICKET_ALPHABET[bytes[i] % TICKET_ALPHABET.length];
-  }
-  for (let i = 4; i < 8; i++) {
-    part2 += TICKET_ALPHABET[bytes[i] % TICKET_ALPHABET.length];
-  }
-  return `EP-${part1}-${part2}`;
-}
-
-// ----------------------------------------------------
-// 4. Attendee Registration (Tile 1)
+// 3. Attendee Registration (Tile 1)
 // ----------------------------------------------------
 async function registerUser() {
   const nameInput = document.getElementById('name');
   const emailInput = document.getElementById('email');
   const dietInput = document.getElementById('diet');
   const msgEl = document.getElementById('reg-msg');
+  const btn = document.getElementById('btn-register');
   const resultCard = document.getElementById('ticket-result-card');
   const infoPlaceholder = document.getElementById('ticket-info-placeholder');
 
@@ -163,71 +167,45 @@ async function registerUser() {
     return;
   }
 
-  if (!db) {
-    showToast('Database initializing, please try again.', 'warning');
+  btn.disabled = true;
+  btn.textContent = 'Generating Pass...';
+
+  const res = await apiFetch('/api/tickets/register', {
+    method: 'POST',
+    body: JSON.stringify({ fullName, email, diet })
+  });
+
+  btn.disabled = false;
+  btn.textContent = 'Generate Ticket Pass';
+
+  if (!res.ok || !res.data.success) {
+    const errMsg = res.data.error || 'Could not issue ticket.';
+    msgEl.textContent = errMsg;
+    msgEl.classList.add(res.status === 409 ? 'text-warning' : 'text-danger');
+    showToast(errMsg, res.status === 409 ? 'warning' : 'error');
     return;
   }
 
-  // Check capacity & existing registration
-  const tx = db.transaction(['tickets'], 'readwrite');
-  const store = tx.objectStore('tickets');
+  const ticket = res.data.ticket;
+  document.getElementById('pass-ticket-id').textContent = ticket.ticketId;
+  document.getElementById('pass-holder-name').textContent = ticket.fullName;
+  document.getElementById('pass-holder-diet').textContent = ticket.diet;
+  const passEventEl = document.getElementById('pass-event-name');
+  if (passEventEl) passEventEl.textContent = CURRENT_EVENT.name;
 
-  const countReq = store.count();
-  countReq.onsuccess = () => {
-    const totalCount = countReq.result;
-    if (totalCount >= MAX_SEATS) {
-      msgEl.textContent = `This event is at full capacity (${MAX_SEATS} of ${MAX_SEATS} seats taken).`;
-      msgEl.classList.add('text-danger');
-      return;
-    }
+  if (infoPlaceholder) infoPlaceholder.classList.add('hidden');
+  resultCard.classList.remove('hidden');
 
-    const emailIndex = store.index('email');
-    const existingReq = emailIndex.get(email);
+  const seatsEl = document.getElementById('seats-text');
+  if (seatsEl && typeof res.data.seatsRemaining === 'number') {
+    seatsEl.textContent = `Seats Left: ${res.data.seatsRemaining} / ${res.data.capacity}`;
+  }
 
-    existingReq.onsuccess = () => {
-      if (existingReq.result) {
-        const existing = existingReq.result;
-        msgEl.textContent = `This email is already registered. Ticket ID: ${existing.ticketId}`;
-        msgEl.classList.add('text-warning');
-        showToast('Email address already registered.', 'warning');
-        return;
-      }
+  msgEl.textContent = `Ticket ${ticket.ticketId} issued for ${ticket.fullName}.`;
+  msgEl.classList.add('text-success');
 
-      // Generate unique ticket
-      const ticketId = generateTicketId();
-      const newTicket = {
-        ticketId,
-        eventId: CURRENT_EVENT.id,
-        fullName,
-        email,
-        diet,
-        registeredAt: new Date().toISOString(),
-        gateCheckedIn: false,
-        gateCheckedInAt: null,
-        mealClaimed: false,
-        mealClaimedAt: null,
-        duplicateAttempts: 0
-      };
-
-      store.add(newTicket);
-
-      tx.oncomplete = () => {
-        // Display Ticket Card
-        document.getElementById('pass-ticket-id').textContent = ticketId;
-        document.getElementById('pass-holder-name').textContent = fullName;
-        document.getElementById('pass-holder-diet').textContent = diet;
-        
-        if (infoPlaceholder) infoPlaceholder.classList.add('hidden');
-        resultCard.classList.remove('hidden');
-
-        msgEl.textContent = `Ticket ${ticketId} issued for ${fullName}.`;
-        msgEl.classList.add('text-success');
-
-        showToast(`Pass issued for ${fullName}.`, 'success');
-        updateAdmin();
-      };
-    };
-  };
+  showToast(`Pass issued for ${ticket.fullName}.`, 'success');
+  updateAdmin();
 }
 
 function resetRegisterForm() {
@@ -243,9 +221,9 @@ function resetRegisterForm() {
 }
 
 // ----------------------------------------------------
-// 5. Gate & Meal Scan Desk (Tile 2)
+// 4. Gate & Meal Scan Desk (Tile 2)
 // ----------------------------------------------------
-function verifyPass() {
+async function verifyPass() {
   const scanType = document.getElementById('scan-type').value;
   const inputEl = document.getElementById('ticket-input');
   const msgEl = document.getElementById('scan-msg');
@@ -257,8 +235,6 @@ function verifyPass() {
   const resultMeta = document.getElementById('scan-result-meta');
 
   let ticketId = inputEl.value.trim().toUpperCase();
-
-  // Tolerate missing hyphen (e.g. EP7K3QX9M2 -> EP-7K3Q-X9M2)
   if (ticketId.length === 10 && !ticketId.includes('-')) {
     ticketId = `${ticketId.slice(0, 2)}-${ticketId.slice(2, 6)}-${ticketId.slice(6, 10)}`;
   }
@@ -272,175 +248,160 @@ function verifyPass() {
   resultPanel.className = 'result-panel hidden';
   msgEl.textContent = '';
 
-  const tx = db.transaction(['tickets'], 'readwrite');
-  const store = tx.objectStore('tickets');
-  const getReq = store.get(ticketId);
+  const res = await apiFetch('/api/tickets/verify', {
+    method: 'POST',
+    body: JSON.stringify({ ticketId, mode: scanType })
+  });
 
-  getReq.onsuccess = () => {
-    const ticket = getReq.result;
-    const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  if (res.status === 401 || res.status === 403) {
+    showToast(res.data.error || 'Volunteer authorization required.', 'error');
+    openAuthModal('pin', 'volunteer');
+    return;
+  }
 
-    if (!ticket) {
-      resultPanel.className = 'result-panel result-error';
-      resultBadge.textContent = 'NOT FOUND';
-      resultTime.textContent = nowTime;
-      resultTitle.textContent = `No ticket "${ticketId}" found`;
-      resultDesc.textContent = 'Verify the alphanumeric ID or direct attendee to the Help Desk.';
-      resultMeta.textContent = 'Unrecognized ticket identifier.';
+  const nowTime = formatTime(new Date().toISOString());
+  const status = res.data.resultStatus;
+  const ticket = res.data.ticket;
+
+  if (status === 'NOT_FOUND' || res.status === 404) {
+    resultPanel.className = 'result-panel result-error';
+    resultBadge.textContent = 'NOT FOUND';
+    resultTime.textContent = nowTime;
+    resultTitle.textContent = `No ticket "${ticketId}" found`;
+    resultDesc.textContent = 'Verify the alphanumeric ID or direct attendee to the Help Desk.';
+    resultMeta.textContent = 'Unrecognized ticket identifier.';
+    resultPanel.classList.remove('hidden');
+    showToast('Ticket not found in roster.', 'error');
+    return;
+  }
+
+  if (!ticket) {
+    showToast(res.data.error || 'Verification failed.', 'error');
+    return;
+  }
+
+  if (scanType === 'gate') {
+    if (status === 'DUPLICATE') {
+      const checkedInTime = formatTime(ticket.gateCheckedInAt);
+      resultPanel.className = 'result-panel result-duplicate';
+      resultBadge.textContent = 'ALREADY CHECKED IN';
+      resultTime.textContent = checkedInTime;
+      resultTitle.textContent = 'Duplicate Check-in Blocked';
+      resultDesc.textContent = `Already admitted at ${checkedInTime}. Not counted again.`;
+      resultMeta.textContent = `Attendee: ${ticket.fullName} (${ticket.email}) • Duplicate attempts: ${ticket.duplicateAttempts}`;
       resultPanel.classList.remove('hidden');
-      showToast('Ticket not found in roster.', 'error');
-      return;
+      showToast('Duplicate check-in blocked.', 'warning');
+    } else if (status === 'VALID') {
+      const checkedInTime = formatTime(ticket.gateCheckedInAt);
+      resultPanel.className = 'result-panel result-valid';
+      resultBadge.textContent = 'CHECKED IN';
+      resultTime.textContent = checkedInTime;
+      resultTitle.textContent = `Welcome, ${ticket.fullName}`;
+      resultDesc.textContent = `Checked in at ${checkedInTime}. Pass valid.`;
+      resultMeta.textContent = `Dietary: ${ticket.diet} • Email: ${ticket.email}`;
+      resultPanel.classList.remove('hidden');
+
+      inputEl.value = '';
+      inputEl.focus();
+      showToast(`Admitted: ${ticket.fullName}`, 'success');
     }
+  } else if (scanType === 'meal') {
+    if (status === 'GATE_REQUIRED') {
+      resultPanel.className = 'result-panel result-error';
+      resultBadge.textContent = 'GATE ENTRY REQUIRED';
+      resultTime.textContent = nowTime;
+      resultTitle.textContent = 'Attendee Not Admitted at Gate';
+      resultDesc.textContent = `${ticket.fullName} has not checked in through the main gate yet.`;
+      resultMeta.textContent = 'Direct attendee to main entrance registration desk first.';
+      resultPanel.classList.remove('hidden');
+      showToast('Main gate check-in required first.', 'warning');
+    } else if (status === 'DUPLICATE') {
+      const claimedTime = formatTime(ticket.mealClaimedAt);
+      resultPanel.className = 'result-panel result-duplicate';
+      resultBadge.textContent = 'MEAL ALREADY CLAIMED';
+      resultTime.textContent = claimedTime;
+      resultTitle.textContent = 'Duplicate Meal Attempt';
+      resultDesc.textContent = `Meal plate was previously issued at ${claimedTime}.`;
+      resultMeta.textContent = `Dietary: ${ticket.diet} • Name: ${ticket.fullName}`;
+      resultPanel.classList.remove('hidden');
+      showToast('Meal already claimed for this pass.', 'warning');
+    } else if (status === 'VALID') {
+      const claimedTime = formatTime(ticket.mealClaimedAt);
+      resultPanel.className = 'result-panel result-valid';
+      resultBadge.textContent = 'VALID MEAL PASS';
+      resultTime.textContent = claimedTime;
+      resultTitle.textContent = `Serve Plate: ${ticket.diet.toUpperCase()}`;
+      resultDesc.textContent = `Meal pass validated for ${ticket.fullName} at ${claimedTime}.`;
+      resultMeta.textContent = `Issue ${ticket.diet} meal plate.`;
+      resultPanel.classList.remove('hidden');
 
-    // Scenario A: Gate Entry
-    if (scanType === 'gate') {
-      if (ticket.gateCheckedIn) {
-        // DUPLICATE ATTEMPT
-        ticket.duplicateAttempts = (ticket.duplicateAttempts || 0) + 1;
-        store.put(ticket);
-
-        resultPanel.className = 'result-panel result-duplicate';
-        resultBadge.textContent = 'ALREADY CHECKED IN';
-        resultTime.textContent = ticket.gateCheckedInAt;
-        resultTitle.textContent = 'Duplicate Check-in Blocked';
-        resultDesc.textContent = `Already admitted at ${ticket.gateCheckedInAt}. Not counted again.`;
-        resultMeta.textContent = `Attendee: ${ticket.fullName} (${ticket.email}) • Duplicate attempts: ${ticket.duplicateAttempts}`;
-        resultPanel.classList.remove('hidden');
-        showToast('Duplicate check-in blocked.', 'warning');
-      } else {
-        // VALID GATE CHECK-IN
-        ticket.gateCheckedIn = true;
-        ticket.gateCheckedInAt = nowTime;
-        store.put(ticket);
-
-        resultPanel.className = 'result-panel result-valid';
-        resultBadge.textContent = 'CHECKED IN';
-        resultTime.textContent = nowTime;
-        resultTitle.textContent = `Welcome, ${ticket.fullName}`;
-        resultDesc.textContent = `Checked in at ${nowTime}. Pass valid.`;
-        resultMeta.textContent = `Dietary: ${ticket.diet} • Email: ${ticket.email}`;
-        resultPanel.classList.remove('hidden');
-
-        inputEl.value = '';
-        inputEl.focus();
-        showToast(`Admitted: ${ticket.fullName}`, 'success');
-      }
-    } 
-    // Scenario B: Dining / Meal Check
-    else if (scanType === 'meal') {
-      if (!ticket.gateCheckedIn) {
-        resultPanel.className = 'result-panel result-error';
-        resultBadge.textContent = 'GATE ENTRY REQUIRED';
-        resultTime.textContent = nowTime;
-        resultTitle.textContent = 'Attendee Not Admitted at Gate';
-        resultDesc.textContent = `${ticket.fullName} has not checked in through the main gate yet.`;
-        resultMeta.textContent = 'Direct attendee to main entrance registration desk first.';
-        resultPanel.classList.remove('hidden');
-        showToast('Main gate check-in required first.', 'warning');
-      } else if (ticket.mealClaimed) {
-        resultPanel.className = 'result-panel result-duplicate';
-        resultBadge.textContent = 'MEAL ALREADY CLAIMED';
-        resultTime.textContent = ticket.mealClaimedAt;
-        resultTitle.textContent = 'Duplicate Meal Attempt';
-        resultDesc.textContent = `Meal plate was previously issued at ${ticket.mealClaimedAt}.`;
-        resultMeta.textContent = `Dietary: ${ticket.diet} • Name: ${ticket.fullName}`;
-        resultPanel.classList.remove('hidden');
-        showToast('Meal already claimed for this pass.', 'warning');
-      } else {
-        ticket.mealClaimed = true;
-        ticket.mealClaimedAt = nowTime;
-        store.put(ticket);
-
-        resultPanel.className = 'result-panel result-valid';
-        resultBadge.textContent = 'VALID MEAL PASS';
-        resultTime.textContent = nowTime;
-        resultTitle.textContent = `Serve Plate: ${ticket.diet.toUpperCase()}`;
-        resultDesc.textContent = `Meal pass validated for ${ticket.fullName} at ${nowTime}.`;
-        resultMeta.textContent = `Issue ${ticket.diet} meal plate.`;
-        resultPanel.classList.remove('hidden');
-
-        inputEl.value = '';
-        inputEl.focus();
-        showToast(`Issued ${ticket.diet} meal plate to ${ticket.fullName}`, 'success');
-      }
+      inputEl.value = '';
+      inputEl.focus();
+      showToast(`Issued ${ticket.diet} meal plate to ${ticket.fullName}`, 'success');
     }
+  }
 
-    tx.oncomplete = () => {
-      updateAdmin();
-    };
-  };
+  updateAdmin();
 }
 
 // ----------------------------------------------------
-// 6. Admin Telemetry & Live Stats (Tile 3)
+// 5. Admin Telemetry & Live Stats (Tile 3)
 // ----------------------------------------------------
-function updateAdmin() {
-  if (!db) return;
+async function updateAdmin() {
+  if (typeof Auth === 'undefined' || !Auth.isVolunteer()) {
+    await loadEventCapacity();
+    return;
+  }
 
-  const tx = db.transaction(['tickets'], 'readonly');
-  const store = tx.objectStore('tickets');
-  const allReq = store.getAll();
+  const res = await apiFetch('/api/tickets/stats', { method: 'GET' });
+  if (!res.ok || !res.data.success) {
+    await loadEventCapacity();
+    return;
+  }
 
-  allReq.onsuccess = () => {
-    const list = allReq.result || [];
-    const totalRegistered = list.length;
-    const insideCount = list.filter(t => t.gateCheckedIn).length;
-    const mealsCount = list.filter(t => t.mealClaimed).length;
-    const noShows = totalRegistered - insideCount;
-    const seatsRemaining = MAX_SEATS - totalRegistered;
-    const percentage = totalRegistered > 0 ? Math.round((insideCount / totalRegistered) * 100) : 0;
+  const { stats, recentCheckins, event } = res.data;
+  if (event) CURRENT_EVENT = event;
 
-    // Update Seat Capacity Pill
-    const seatsEl = document.getElementById('seats-text');
-    if (seatsEl) {
-      seatsEl.textContent = `Seats Left: ${seatsRemaining} / ${MAX_SEATS}`;
-    }
+  // Update Seat Capacity Pill
+  const seatsEl = document.getElementById('seats-text');
+  if (seatsEl) {
+    seatsEl.textContent = `Seats Left: ${stats.seatsRemaining} / ${stats.capacity}`;
+  }
 
-    // Update Check-in Desk Counter & Progress
-    const deskInside = document.getElementById('desk-counter-inside');
-    const deskTotal = document.getElementById('desk-counter-total');
-    const deskProgress = document.getElementById('desk-progress-fill');
-    if (deskInside) deskInside.textContent = insideCount;
-    if (deskTotal) deskTotal.textContent = `/ ${totalRegistered} Inside (${percentage}%)`;
-    if (deskProgress) deskProgress.style.width = `${percentage}%`;
+  // Update Check-in Desk Counter & Progress
+  const deskInside = document.getElementById('desk-counter-inside');
+  const deskTotal = document.getElementById('desk-counter-total');
+  const deskProgress = document.getElementById('desk-progress-fill');
+  if (deskInside) deskInside.textContent = stats.insideCount;
+  if (deskTotal) deskTotal.textContent = `/ ${stats.totalRegistered} Inside (${stats.percentage}%)`;
+  if (deskProgress) deskProgress.style.width = `${stats.percentage}%`;
 
-    // Update Admin Stats
-    const insideEl = document.getElementById('stat-inside');
-    const regEl = document.getElementById('stat-registered');
-    const noshowEl = document.getElementById('stat-noshows');
-    const mealEl = document.getElementById('stat-meals');
+  // Update Admin Stats
+  const insideEl = document.getElementById('stat-inside');
+  const regEl = document.getElementById('stat-registered');
+  const noshowEl = document.getElementById('stat-noshows');
+  const mealEl = document.getElementById('stat-meals');
 
-    if (insideEl) insideEl.textContent = insideCount;
-    if (regEl) regEl.textContent = totalRegistered;
-    if (noshowEl) noshowEl.textContent = noShows;
-    if (mealEl) mealEl.textContent = mealsCount;
+  if (insideEl) insideEl.textContent = stats.insideCount;
+  if (regEl) regEl.textContent = stats.totalRegistered;
+  if (noshowEl) noshowEl.textContent = stats.noShows;
+  if (mealEl) mealEl.textContent = stats.mealsCount;
 
-    // Diet Breakdown of served meals
-    const vegCount = list.filter(t => t.mealClaimed && t.diet === 'Veg').length;
-    const nonvegCount = list.filter(t => t.mealClaimed && t.diet === 'Non-Veg').length;
-    const jainCount = list.filter(t => t.mealClaimed && t.diet === 'Jain').length;
-    const veganCount = list.filter(t => t.mealClaimed && t.diet === 'Vegan').length;
+  // Diet Breakdown of served meals
+  const dc = stats.dietaryCounts || {};
+  if (document.getElementById('count-veg')) document.getElementById('count-veg').textContent = dc.Veg || 0;
+  if (document.getElementById('count-nonveg')) document.getElementById('count-nonveg').textContent = dc['Non-Veg'] || 0;
+  if (document.getElementById('count-jain')) document.getElementById('count-jain').textContent = dc.Jain || 0;
+  if (document.getElementById('count-vegan')) document.getElementById('count-vegan').textContent = dc.Vegan || 0;
 
-    if (document.getElementById('count-veg')) document.getElementById('count-veg').textContent = vegCount;
-    if (document.getElementById('count-nonveg')) document.getElementById('count-nonveg').textContent = nonvegCount;
-    if (document.getElementById('count-jain')) document.getElementById('count-jain').textContent = jainCount;
-    if (document.getElementById('count-vegan')) document.getElementById('count-vegan').textContent = veganCount;
-
-    // Update Recent Check-ins List (Last 5 Desk entries)
-    renderRecentCheckins(list);
-  };
+  renderRecentCheckins(recentCheckins || []);
 }
 
-function renderRecentCheckins(list) {
+function renderRecentCheckins(checkedInList) {
   const container = document.getElementById('recent-checkins-list');
   if (!container) return;
 
-  const checkedInList = list
-    .filter(t => t.gateCheckedIn && t.gateCheckedInAt)
-    .slice(-5)
-    .reverse();
-
-  if (checkedInList.length === 0) {
+  if (!checkedInList || checkedInList.length === 0) {
     container.innerHTML = `<div class="feed-item"><span class="text-muted">No check-ins recorded yet.</span></div>`;
     return;
   }
@@ -453,7 +414,7 @@ function renderRecentCheckins(list) {
       </div>
       <div class="feed-item-right">
         <span class="role-badge role-organizer">CHECKED IN</span>
-        <span class="feed-time">${escapeHtml(t.gateCheckedInAt)}</span>
+        <span class="feed-time">${escapeHtml(formatTime(t.gateCheckedInAt))}</span>
       </div>
     </div>
   `).join('');
@@ -471,127 +432,73 @@ function escapeHtml(str) {
 }
 
 // CSV Export (PRD Section 7 compliant)
-function exportAttendeesCSV() {
-  if (!db) return;
+async function exportAttendeesCSV() {
+  const res = await apiFetch('/api/tickets', { method: 'GET' });
+  if (!res.ok || !res.data.success) {
+    showToast(res.data.error || 'Organizer access required to export roster.', 'error');
+    return;
+  }
 
-  const tx = db.transaction(['tickets'], 'readonly');
-  const store = tx.objectStore('tickets');
-  const allReq = store.getAll();
+  const attendees = res.data.tickets || [];
+  if (attendees.length === 0) {
+    showToast('No attendee records to export.', 'warning');
+    return;
+  }
 
-  allReq.onsuccess = () => {
-    const attendees = allReq.result || [];
-    if (attendees.length === 0) {
-      showToast('No attendee records to export.', 'warning');
-      return;
-    }
+  const headers = ['Ticket ID', 'Full Name', 'Email', 'Diet Preference', 'Gate Admitted', 'Admitted At', 'Meal Claimed', 'Meal Claimed At'];
 
-    // Header row
-    const headers = ['Ticket ID', 'Full Name', 'Email', 'Diet Preference', 'Gate Admitted', 'Admitted At', 'Meal Claimed', 'Meal Claimed At'];
-    
-    // Rows with formula injection prevention
-    const rows = attendees.map(a => {
-      let name = (a.fullName || '').replace(/"/g, '""');
-      let email = (a.email || '').replace(/"/g, '""');
-      if (name.startsWith('=') || name.startsWith('+') || name.startsWith('-') || name.startsWith('@')) name = `'` + name;
-      if (email.startsWith('=') || email.startsWith('+') || email.startsWith('-') || email.startsWith('@')) email = `'` + email;
+  const rows = attendees.map(a => {
+    let name = (a.fullName || '').replace(/"/g, '""');
+    let email = (a.email || '').replace(/"/g, '""');
+    if (name.startsWith('=') || name.startsWith('+') || name.startsWith('-') || name.startsWith('@')) name = `'` + name;
+    if (email.startsWith('=') || email.startsWith('+') || email.startsWith('-') || email.startsWith('@')) email = `'` + email;
 
-      return [
-        `"${a.ticketId}"`,
-        `"${name}"`,
-        `"${email}"`,
-        `"${a.diet || ''}"`,
-        `"${a.gateCheckedIn ? 'YES' : 'NO'}"`,
-        `"${a.gateCheckedInAt || '—'}"`,
-        `"${a.mealClaimed ? 'YES' : 'NO'}"`,
-        `"${a.mealClaimedAt || '—'}"`
-      ];
-    });
+    return [
+      `"${a.ticketId}"`,
+      `"${name}"`,
+      `"${email}"`,
+      `"${a.diet || ''}"`,
+      `"${a.gateCheckedIn ? 'YES' : 'NO'}"`,
+      `"${a.gateCheckedIn ? formatTime(a.gateCheckedInAt) : '—'}"`,
+      `"${a.mealClaimed ? 'YES' : 'NO'}"`,
+      `"${a.mealClaimed ? formatTime(a.mealClaimedAt) : '—'}"`
+    ];
+  });
 
-    // UTF-8 BOM prefix for Microsoft Excel compatibility
-    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
+  const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
 
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `eventpass-attendees-${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', `eventpass-attendees-${new Date().toISOString().split('T')[0]}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 
-    showToast('Attendee roster exported to CSV.', 'success');
-  };
+  showToast('Attendee roster exported to CSV.', 'success');
 }
 
-// Sample Data Seeder
-function seedInitialAttendeesIfEmpty() {
-  const tx = db.transaction(['tickets'], 'readwrite');
-  const store = tx.objectStore('tickets');
-  const countReq = store.count();
-
-  countReq.onsuccess = () => {
-    if (countReq.result === 0) {
-      const samples = [
-        {
-          ticketId: 'EP-7K3Q-X9M2',
-          eventId: CURRENT_EVENT.id,
-          fullName: 'Ananya Kulkarni',
-          email: 'ananya@eventpass.edu',
-          diet: 'Veg',
-          registeredAt: new Date(Date.now() - 3600000).toISOString(),
-          gateCheckedIn: true,
-          gateCheckedInAt: '10:42 AM',
-          mealClaimed: true,
-          mealClaimedAt: '12:15 PM',
-          duplicateAttempts: 0
-        },
-        {
-          ticketId: 'EP-B2XK-9HDR',
-          eventId: CURRENT_EVENT.id,
-          fullName: 'Sana Sheikh',
-          email: 'sana@example.com',
-          diet: 'Non-Veg',
-          registeredAt: new Date(Date.now() - 3000000).toISOString(),
-          gateCheckedIn: true,
-          gateCheckedInAt: '10:51 AM',
-          mealClaimed: false,
-          mealClaimedAt: null,
-          duplicateAttempts: 0
-        },
-        {
-          ticketId: 'EP-4M8T-QW3N',
-          eventId: CURRENT_EVENT.id,
-          fullName: 'Rohan Patil',
-          email: 'rohan@example.com',
-          diet: 'Jain',
-          registeredAt: new Date(Date.now() - 2500000).toISOString(),
-          gateCheckedIn: false,
-          gateCheckedInAt: null,
-          mealClaimed: false,
-          mealClaimedAt: null,
-          duplicateAttempts: 0
-        }
-      ];
-
-      samples.forEach(s => store.add(s));
-      tx.oncomplete = () => {
-        updateAdmin();
-      };
-    }
-  };
-}
-
-function resetEventData() {
+async function resetEventData() {
   if (!confirm('Are you sure you want to reset attendee records back to initial demo state?')) return;
-  const tx = db.transaction(['tickets'], 'readwrite');
-  const store = tx.objectStore('tickets');
-  store.clear();
-  tx.oncomplete = () => {
-    seedInitialAttendeesIfEmpty();
-    showToast('Event data reset to demo state.', 'info');
-  };
+
+  const res = await apiFetch('/api/tickets/reset', { method: 'POST' });
+  if (!res.ok || !res.data.success) {
+    showToast(res.data.error || 'Failed to reset sample data.', 'error');
+    return;
+  }
+
+  await updateAdmin();
+  showToast('Event data reset to demo state.', 'info');
 }
+
+// Initial app bootstrap
+document.addEventListener('DOMContentLoaded', () => {
+  loadEventCapacity();
+  updateAdmin();
+  checkBackendStatus();
+});
 
 // ----------------------------------------------------
 // 7. Authentication UI & Modal Handlers
@@ -810,10 +717,14 @@ async function checkBackendStatus() {
 // Listen to auth events
 window.addEventListener('auth:login', () => {
   checkTilePermissions();
+  updateAdmin();
 });
 
 window.addEventListener('auth:logout', () => {
   checkTilePermissions();
+  const resultPanel = document.getElementById('scan-result-panel');
+  if (resultPanel) resultPanel.className = 'result-panel hidden';
+  loadEventCapacity();
 });
 
 // ----------------------------------------------------

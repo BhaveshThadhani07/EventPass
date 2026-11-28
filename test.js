@@ -1,17 +1,19 @@
 /**
- * EventPass - Automated Authentication Test Runner
+ * EventPass - Automated Backend Test Runner
  * Run via: npm test
  */
 
 const authRoutes = require('./authRoutes');
+const eventRoutes = require('./eventRoutes');
 const { isSupabaseConfigured } = require('./supabaseClient');
 
-function mockReq({ method = 'GET', url = '/', body = {}, headers = {}, ip = '127.0.0.1' }) {
+function mockReq({ method = 'GET', url = '/', body = {}, headers = {}, query = {}, ip = '127.0.0.1' }) {
   return {
     method,
     url,
     body,
     headers,
+    query,
     ip,
     get: (h) => headers[h.toLowerCase()] || headers[h]
   };
@@ -75,7 +77,15 @@ async function run() {
   const pinHandler = getHandler(authRoutes, 'POST', '/pin-login');
   const meHandler = getHandler(authRoutes, 'GET', '/me');
 
+  const eventHandler = getHandler(eventRoutes, 'GET', '/event');
+  const ticketRegisterHandler = getHandler(eventRoutes, 'POST', '/tickets/register');
+  const ticketVerifyHandler = getHandler(eventRoutes, 'POST', '/tickets/verify');
+  const ticketStatsHandler = getHandler(eventRoutes, 'GET', '/tickets/stats');
+  const ticketListHandler = getHandler(eventRoutes, 'GET', '/tickets');
+
   let organizerToken = '';
+  let volunteerToken = '';
+  let attendeeToken = '';
 
   await test('Organizer Login (bhavesh@eventpass.edu / admin123)', async () => {
     const req = mockReq({ method: 'POST', body: { email: 'bhavesh@eventpass.edu', password: 'admin123' } });
@@ -141,6 +151,157 @@ async function run() {
     const res = mockRes();
     await pinHandler(req, res);
     if (res.statusCode !== 200 || !res.body.success || res.body.user.role !== 'volunteer') throw new Error('PIN login failed');
+    volunteerToken = res.body.token;
+  });
+
+  await test('Attendee Login for RBAC negative test', async () => {
+    const req = mockReq({ method: 'POST', body: { email: 'ananya@eventpass.edu', password: 'attendee123' } });
+    const res = mockRes();
+    await loginHandler(req, res);
+    if (res.statusCode !== 200 || !res.body.token) throw new Error('Attendee login failed');
+    attendeeToken = res.body.token;
+  });
+
+  await test('GET /api/event returns event details and seat capacity', async () => {
+    const req = mockReq({ method: 'GET' });
+    const res = mockRes();
+    await eventHandler(req, res);
+    if (res.statusCode !== 200 || !res.body.success || !res.body.event || typeof res.body.seatsRemaining !== 'number') {
+      throw new Error('Event endpoint failed');
+    }
+  });
+
+  const ticketEmail = `attendee_${Date.now()}@example.com`;
+  let issuedTicketId = '';
+
+  await test('POST /api/tickets/register issues unique EP-XXXX-XXXX pass', async () => {
+    const req = mockReq({
+      method: 'POST',
+      body: { fullName: 'Meera Deshmukh', email: ticketEmail, diet: 'Jain' }
+    });
+    const res = mockRes();
+    await ticketRegisterHandler(req, res);
+    if (res.statusCode !== 201 || !res.body.success || !res.body.ticket.ticketId.startsWith('EP-')) {
+      throw new Error('Ticket registration failed');
+    }
+    issuedTicketId = res.body.ticket.ticketId;
+  });
+
+  await test('POST /api/tickets/register blocks duplicate email', async () => {
+    const req = mockReq({
+      method: 'POST',
+      body: { fullName: 'Meera Duplicate', email: ticketEmail, diet: 'Veg' }
+    });
+    const res = mockRes();
+    await ticketRegisterHandler(req, res);
+    if (res.statusCode !== 409 || res.body.success) throw new Error('Expected 409 duplicate ticket');
+  });
+
+  await test('POST /api/tickets/verify blocks unauthenticated and attendee roles', async () => {
+    const reqUnauth = mockReq({ method: 'POST', body: { ticketId: issuedTicketId, mode: 'gate' } });
+    const resUnauth = mockRes();
+    await ticketVerifyHandler(reqUnauth, resUnauth);
+    if (resUnauth.statusCode !== 401) throw new Error('Expected 401 unauthenticated');
+
+    const reqAttendee = mockReq({
+      method: 'POST',
+      headers: { authorization: `Bearer ${attendeeToken}` },
+      body: { ticketId: issuedTicketId, mode: 'gate' }
+    });
+    const resAttendee = mockRes();
+    await ticketVerifyHandler(reqAttendee, resAttendee);
+    if (resAttendee.statusCode !== 403) throw new Error('Expected 403 forbidden for attendee');
+  });
+
+  await test('POST /api/tickets/verify blocks meal before gate entry', async () => {
+    const req = mockReq({
+      method: 'POST',
+      headers: { authorization: `Bearer ${volunteerToken}` },
+      body: { ticketId: issuedTicketId, mode: 'meal' }
+    });
+    const res = mockRes();
+    await ticketVerifyHandler(req, res);
+    if (res.statusCode !== 409 || res.body.resultStatus !== 'GATE_REQUIRED') {
+      throw new Error('Expected GATE_REQUIRED');
+    }
+  });
+
+  await test('POST /api/tickets/verify admits at gate and blocks duplicate gate scan', async () => {
+    const req1 = mockReq({
+      method: 'POST',
+      headers: { authorization: `Bearer ${volunteerToken}` },
+      body: { ticketId: issuedTicketId.replace(/-/g, ''), mode: 'gate' }
+    });
+    const res1 = mockRes();
+    await ticketVerifyHandler(req1, res1);
+    if (res1.statusCode !== 200 || res1.body.resultStatus !== 'VALID' || !res1.body.ticket.gateCheckedIn) {
+      throw new Error('Expected VALID gate check-in');
+    }
+
+    const req2 = mockReq({
+      method: 'POST',
+      headers: { authorization: `Bearer ${volunteerToken}` },
+      body: { ticketId: issuedTicketId, mode: 'gate' }
+    });
+    const res2 = mockRes();
+    await ticketVerifyHandler(req2, res2);
+    if (res2.statusCode !== 409 || res2.body.resultStatus !== 'DUPLICATE' || res2.body.ticket.duplicateAttempts !== 1) {
+      throw new Error('Expected DUPLICATE gate scan block');
+    }
+  });
+
+  await test('POST /api/tickets/verify serves meal and blocks duplicate meal', async () => {
+    const req1 = mockReq({
+      method: 'POST',
+      headers: { authorization: `Bearer ${volunteerToken}` },
+      body: { ticketId: issuedTicketId, mode: 'meal' }
+    });
+    const res1 = mockRes();
+    await ticketVerifyHandler(req1, res1);
+    if (res1.statusCode !== 200 || res1.body.resultStatus !== 'VALID' || !res1.body.ticket.mealClaimed) {
+      throw new Error('Expected VALID meal check-in');
+    }
+
+    const req2 = mockReq({
+      method: 'POST',
+      headers: { authorization: `Bearer ${volunteerToken}` },
+      body: { ticketId: issuedTicketId, mode: 'meal' }
+    });
+    const res2 = mockRes();
+    await ticketVerifyHandler(req2, res2);
+    if (res2.statusCode !== 409 || res2.body.resultStatus !== 'DUPLICATE') {
+      throw new Error('Expected DUPLICATE meal block');
+    }
+  });
+
+  await test('GET /api/tickets/stats and /api/tickets enforce roles and return telemetry', async () => {
+    const reqStats = mockReq({
+      method: 'GET',
+      headers: { authorization: `Bearer ${volunteerToken}` }
+    });
+    const resStats = mockRes();
+    await ticketStatsHandler(reqStats, resStats);
+    if (resStats.statusCode !== 200 || !resStats.body.success || resStats.body.stats.insideCount < 1) {
+      throw new Error('Expected telemetry stats');
+    }
+
+    const reqVolList = mockReq({
+      method: 'GET',
+      headers: { authorization: `Bearer ${volunteerToken}` }
+    });
+    const resVolList = mockRes();
+    await ticketListHandler(reqVolList, resVolList);
+    if (resVolList.statusCode !== 403) throw new Error('Expected 403 for volunteer listing full roster');
+
+    const reqOrgList = mockReq({
+      method: 'GET',
+      headers: { authorization: `Bearer ${organizerToken}` }
+    });
+    const resOrgList = mockRes();
+    await ticketListHandler(reqOrgList, resOrgList);
+    if (resOrgList.statusCode !== 200 || !Array.isArray(resOrgList.body.tickets)) {
+      throw new Error('Expected organizer ticket list');
+    }
   });
 
   console.log('========================================================');

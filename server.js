@@ -8,6 +8,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const authRoutes = require('./authRoutes');
+const eventRoutes = require('./eventRoutes');
 const { isSupabaseConfigured } = require('./supabaseClient');
 
 const app = express();
@@ -27,8 +28,9 @@ app.use(express.urlencoded({ extended: true }));
 // Serve frontend static assets (HTML, CSS, JS)
 app.use(express.static(path.join(__dirname)));
 
-// API Authentication Routes
+// API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api', eventRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
