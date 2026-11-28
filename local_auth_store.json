@@ -119,9 +119,89 @@
       "pin_code": "4321",
       "created_at": "2026-11-28T07:23:15.092Z",
       "updated_at": "2026-11-28T07:23:15.092Z"
+    },
+    {
+      "id": "usr-mx0f3m16-lnn9h",
+      "email": "user_1795870789811@eventpass.edu",
+      "password_hash": "$2a$10$OVurYNHIUEEmDGLvCZxN4.gdGzxOW7K3ID0hW8iNxGQ25aGxyah5.",
+      "full_name": "Test Desk Volunteer",
+      "role": "volunteer",
+      "pin_code": "4321",
+      "created_at": "2026-11-28T12:59:49.967Z",
+      "updated_at": "2026-11-28T12:59:49.967Z"
     }
   ],
   "auditLogs": [
+    {
+      "id": "log-1795871497039",
+      "user_id": "usr-mwryglel-f82vi",
+      "email": "bhaveshthadhani7@gmail.com",
+      "action": "LOGOUT",
+      "role": "volunteer",
+      "ip_address": "::1",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+      "created_at": "2026-11-28T13:11:37.039Z"
+    },
+    {
+      "id": "log-1795870825497",
+      "user_id": "usr-org-01",
+      "email": "bhavesh@eventpass.edu",
+      "action": "LOGIN",
+      "role": "organizer",
+      "ip_address": "::ffff:127.0.0.1",
+      "user_agent": "node",
+      "created_at": "2026-11-28T13:00:25.497Z"
+    },
+    {
+      "id": "log-1795870790148",
+      "user_id": "usr-att-01",
+      "email": "ananya@eventpass.edu",
+      "action": "LOGIN",
+      "role": "attendee",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-28T12:59:50.148Z"
+    },
+    {
+      "id": "log-1795870789985",
+      "user_id": "desk-volunteer",
+      "email": "volunteer-desk@eventpass.internal",
+      "action": "PIN_LOGIN",
+      "role": "volunteer",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-28T12:59:49.985Z"
+    },
+    {
+      "id": "log-1795870789971",
+      "user_id": "usr-mx0f3m16-lnn9h",
+      "email": "user_1795870789811@eventpass.edu",
+      "action": "REGISTER",
+      "role": "volunteer",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-28T12:59:49.971Z"
+    },
+    {
+      "id": "log-1795870789809",
+      "user_id": "usr-org-01",
+      "email": "bhavesh@eventpass.edu",
+      "action": "FAILED_LOGIN",
+      "role": "organizer",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-28T12:59:49.809Z"
+    },
+    {
+      "id": "log-1795870789618",
+      "user_id": "usr-org-01",
+      "email": "bhavesh@eventpass.edu",
+      "action": "LOGIN",
+      "role": "organizer",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-28T12:59:49.613Z"
+    },
     {
       "id": "log-1795850595208",
       "user_id": "usr-att-01",
@@ -528,6 +608,19 @@
       "meal_claimed_at": "2026-11-28T07:23:15.219Z",
       "duplicate_attempts": 1,
       "registered_at": "2026-11-28T07:23:15.211Z"
+    },
+    {
+      "ticket_id": "EP-S6A7-UNCP",
+      "event_id": "E01",
+      "full_name": "Meera Deshmukh",
+      "email": "attendee_1795870790152@example.com",
+      "diet": "Jain",
+      "gate_checked_in": true,
+      "gate_checked_in_at": "2026-11-28T12:59:50.158Z",
+      "meal_claimed": true,
+      "meal_claimed_at": "2026-11-28T12:59:50.165Z",
+      "duplicate_attempts": 1,
+      "registered_at": "2026-11-28T12:59:50.153Z"
     }
   ]
 }

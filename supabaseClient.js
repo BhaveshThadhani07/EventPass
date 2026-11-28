@@ -1,7 +1,7 @@
 /**
  * EventPass - Supabase Client & Data Layer
- * Handles authentication data persistence in Supabase PostgreSQL (profiles table)
- * with graceful local fallback if Supabase credentials are not yet configured.
+ * Handles persistence in Supabase PostgreSQL with local JSON fallback
+ * when Supabase credentials are not yet configured.
  */
 
 require('dotenv').config();
@@ -16,7 +16,6 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABAS
 let supabase = null;
 let isConfigured = false;
 
-// Check if valid Supabase credentials were provided
 if (supabaseUrl && supabaseKey && supabaseUrl.startsWith('http') && !supabaseUrl.includes('your-project')) {
   try {
     supabase = createClient(supabaseUrl, supabaseKey);
@@ -29,16 +28,80 @@ if (supabaseUrl && supabaseKey && supabaseUrl.startsWith('http') && !supabaseUrl
   console.log('[Supabase] No credentials configured. Running in Local Storage Mode (seed data active).');
 }
 
-// Local Storage Fallback implementation (persisted to local_auth_store.json)
 const LOCAL_STORE_FILE = path.join(__dirname, 'local_auth_store.json');
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const DEFAULT_EVENT = {
-  id: 'E01',
-  name: 'Intro to Web Dev Workshop',
-  venue: 'Seminar Hall B',
-  event_date: '2026-11-14',
-  capacity: 50
-};
+function getDefaultEvents() {
+  const now = new Date().toISOString();
+  return [
+    {
+      id: 'E01',
+      name: 'OJT Sprint Demo Day',
+      venue: 'Innovation Lab',
+      event_date: 'Nov 30, 2026',
+      capacity: 200,
+      status: 'active',
+      description: 'Live full-stack architecture and Liquid Glass UI evaluation with faculty mentors.',
+      active_qr_code: null,
+      created_at: now
+    },
+    {
+      id: 'E02',
+      name: 'Bengaluru Student Hackathon',
+      venue: 'Open Arena',
+      event_date: 'Dec 09, 2026',
+      capacity: 350,
+      status: 'active',
+      description: '24-hour rapid build sprint with instant roster sync.',
+      active_qr_code: null,
+      created_at: now
+    },
+    {
+      id: 'E03',
+      name: 'Winter Open-Source Code Sprint',
+      venue: 'Tech Hub',
+      event_date: 'Dec 18, 2026',
+      capacity: 120,
+      status: 'active',
+      description: 'Collaborative pull-request sprint and mentor code review session.',
+      active_qr_code: null,
+      created_at: now
+    },
+    {
+      id: 'E04',
+      name: 'Constellation 2026 Campus Launch',
+      venue: 'Main Auditorium',
+      event_date: 'Aug 24, 2026',
+      capacity: 500,
+      status: 'passive',
+      description: 'Polaris School of Technology orientation showcase and campus event launch.',
+      active_qr_code: null,
+      created_at: now
+    },
+    {
+      id: 'E05',
+      name: 'Cloud & Applied AI Track Workshop',
+      venue: 'Seminar Hall B',
+      event_date: 'Oct 15, 2026',
+      capacity: 200,
+      status: 'passive',
+      description: 'Hands-on deployment lab covering cloud runtimes, API authentication, and telemetry.',
+      active_qr_code: null,
+      created_at: now
+    },
+    {
+      id: 'E06',
+      name: 'Freshers Induction & Club Fair',
+      venue: 'Central Courtyard',
+      event_date: 'Sep 05, 2026',
+      capacity: 550,
+      status: 'passive',
+      description: 'Past campus induction event retained for audit and OJT reporting.',
+      active_qr_code: null,
+      created_at: now
+    }
+  ];
+}
 
 function getSampleTickets() {
   const now = Date.now();
@@ -50,21 +113,21 @@ function getSampleTickets() {
       email: 'ananya@eventpass.edu',
       diet: 'Veg',
       registered_at: new Date(now - 3600000).toISOString(),
-      gate_checked_in: true,
-      gate_checked_in_at: new Date(now - 3000000).toISOString(),
-      meal_claimed: true,
-      meal_claimed_at: new Date(now - 1200000).toISOString(),
+      gate_checked_in: false,
+      gate_checked_in_at: null,
+      meal_claimed: false,
+      meal_claimed_at: null,
       duplicate_attempts: 0
     },
     {
       ticket_id: 'EP-B2XK-9HDR',
-      event_id: 'E01',
-      full_name: 'Sana Sheikh',
-      email: 'sana@example.com',
-      diet: 'Non-Veg',
-      registered_at: new Date(now - 3000000).toISOString(),
+      event_id: 'E04',
+      full_name: 'Ananya Kulkarni',
+      email: 'ananya@eventpass.edu',
+      diet: 'Veg',
+      registered_at: new Date(now - 86400000).toISOString(),
       gate_checked_in: true,
-      gate_checked_in_at: new Date(now - 2400000).toISOString(),
+      gate_checked_in_at: new Date(now - 86000000).toISOString(),
       meal_claimed: false,
       meal_claimed_at: null,
       duplicate_attempts: 0
@@ -76,8 +139,8 @@ function getSampleTickets() {
       email: 'rohan@example.com',
       diet: 'Jain',
       registered_at: new Date(now - 2500000).toISOString(),
-      gate_checked_in: false,
-      gate_checked_in_at: null,
+      gate_checked_in: true,
+      gate_checked_in_at: new Date(now - 1800000).toISOString(),
       meal_claimed: false,
       meal_claimed_at: null,
       duplicate_attempts: 0
@@ -85,23 +148,74 @@ function getSampleTickets() {
   ];
 }
 
-// Initialize local database with default college project users, event, and sample tickets
+function getDefaultNotifications() {
+  const now = Date.now();
+  return [
+    {
+      id: 'notif-1',
+      user_email: '*',
+      title: 'Ongoing Event: OJT Sprint Demo Day',
+      body: 'Gate check-in is open at Innovation Lab.',
+      unread: true,
+      created_at: new Date(now - 720000).toISOString()
+    },
+    {
+      id: 'notif-2',
+      user_email: '*',
+      title: 'Bengaluru Student Hackathon',
+      body: 'Team registrations are now live for Open Arena.',
+      unread: true,
+      created_at: new Date(now - 7200000).toISOString()
+    }
+  ];
+}
+
+function getDefaultChatMessages() {
+  const now = Date.now();
+  return [
+    {
+      id: 'chat-1',
+      sender_name: 'OJT Coordinator Desk',
+      sender_email: 'bhavesh@eventpass.edu',
+      sender_role: 'organizer',
+      message: 'Welcome to EventPass! Register for any active event and scan the gate QR code on arrival.',
+      created_at: new Date(now - 3600000).toISOString()
+    },
+    {
+      id: 'chat-2',
+      sender_name: 'Gate Lead (Innovation Lab)',
+      sender_email: 'aniket@eventpass.edu',
+      sender_role: 'organizer',
+      message: 'Reminder: Keep your QR scanner ready when arriving at the venue.',
+      created_at: new Date(now - 1800000).toISOString()
+    }
+  ];
+}
+
 function initLocalStore() {
   if (fs.existsSync(LOCAL_STORE_FILE)) {
     try {
       const data = JSON.parse(fs.readFileSync(LOCAL_STORE_FILE, 'utf8'));
-      if (data && data.users && Array.isArray(data.users)) {
+      if (data && Array.isArray(data.users)) {
         let updated = false;
         if (!Array.isArray(data.auditLogs)) {
           data.auditLogs = [];
           updated = true;
         }
-        if (!Array.isArray(data.events) || data.events.length === 0) {
-          data.events = [{ ...DEFAULT_EVENT, created_at: new Date().toISOString() }];
+        if (!Array.isArray(data.events) || data.events.length < 2 || !data.events[0].status) {
+          data.events = getDefaultEvents();
           updated = true;
         }
         if (!Array.isArray(data.tickets)) {
           data.tickets = getSampleTickets();
+          updated = true;
+        }
+        if (!Array.isArray(data.notifications)) {
+          data.notifications = getDefaultNotifications();
+          updated = true;
+        }
+        if (!Array.isArray(data.chatMessages)) {
+          data.chatMessages = getDefaultChatMessages();
           updated = true;
         }
         if (updated) {
@@ -118,6 +232,7 @@ function initLocalStore() {
   const defaultHash = bcrypt.hashSync('admin123', salt);
   const volunteerHash = bcrypt.hashSync('volunteer123', salt);
   const attendeeHash = bcrypt.hashSync('attendee123', salt);
+  const now = new Date().toISOString();
 
   const initialData = {
     users: [
@@ -127,9 +242,8 @@ function initLocalStore() {
         password_hash: defaultHash,
         full_name: 'Bhavesh Thadhani',
         role: 'organizer',
-        pin_code: '9999',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        created_at: now,
+        updated_at: now
       },
       {
         id: 'usr-org-02',
@@ -137,9 +251,8 @@ function initLocalStore() {
         password_hash: defaultHash,
         full_name: 'Aniket Hinge',
         role: 'organizer',
-        pin_code: '8888',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        created_at: now,
+        updated_at: now
       },
       {
         id: 'usr-vol-01',
@@ -147,9 +260,8 @@ function initLocalStore() {
         password_hash: volunteerHash,
         full_name: 'Karan (Desk Volunteer)',
         role: 'volunteer',
-        pin_code: '1234',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        created_at: now,
+        updated_at: now
       },
       {
         id: 'usr-att-01',
@@ -157,14 +269,15 @@ function initLocalStore() {
         password_hash: attendeeHash,
         full_name: 'Ananya Kulkarni',
         role: 'attendee',
-        pin_code: '0000',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        created_at: now,
+        updated_at: now
       }
     ],
     auditLogs: [],
-    events: [{ ...DEFAULT_EVENT, created_at: new Date().toISOString() }],
-    tickets: getSampleTickets()
+    events: getDefaultEvents(),
+    tickets: getSampleTickets(),
+    notifications: getDefaultNotifications(),
+    chatMessages: getDefaultChatMessages()
   };
 
   fs.writeFileSync(LOCAL_STORE_FILE, JSON.stringify(initialData, null, 2), 'utf8');
@@ -182,9 +295,8 @@ function saveLocalStore() {
 }
 
 // ----------------------------------------------------
-// Database Operations (Supabase with Local Fallback)
+// User Operations
 // ----------------------------------------------------
-
 async function findUserByEmail(email) {
   const normalizedEmail = email.trim().toLowerCase();
 
@@ -196,36 +308,27 @@ async function findUserByEmail(email) {
         .ilike('email', normalizedEmail)
         .maybeSingle();
 
-      if (error) {
-        console.warn('[Supabase] findUserByEmail error:', error.message);
-      } else if (data) {
-        return data;
-      }
+      if (error) console.warn('[Supabase] findUserByEmail error:', error.message);
+      else if (data) return data;
     } catch (err) {
       console.warn('[Supabase] findUserByEmail catch:', err.message);
     }
   }
 
-  // Fallback to local store
   return localStore.users.find(u => u.email.toLowerCase() === normalizedEmail) || null;
 }
-
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 async function findUserById(id) {
   if (isConfigured && supabase && UUID_REGEX.test(String(id || ''))) {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, email, full_name, role, pin_code, created_at')
+        .select('id, email, full_name, role, created_at')
         .eq('id', id)
         .maybeSingle();
 
-      if (error) {
-        console.warn('[Supabase] findUserById error:', error.message);
-      } else if (data) {
-        return data;
-      }
+      if (error) console.warn('[Supabase] findUserById error:', error.message);
+      else if (data) return data;
     } catch (err) {
       console.warn('[Supabase] findUserById catch:', err.message);
     }
@@ -237,37 +340,7 @@ async function findUserById(id) {
   return safeUser;
 }
 
-async function findUserByRoleAndPin(role, pinCode) {
-  const targetRole = String(role || '').toLowerCase();
-  const cleanPin = String(pinCode || '').trim();
-
-  if (isConfigured && supabase) {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, email, full_name, role, pin_code, created_at')
-        .eq('role', targetRole)
-        .eq('pin_code', cleanPin)
-        .limit(1)
-        .maybeSingle();
-
-      if (error) {
-        console.warn('[Supabase] findUserByRoleAndPin error:', error.message);
-      } else if (data) {
-        return data;
-      }
-    } catch (err) {
-      console.warn('[Supabase] findUserByRoleAndPin catch:', err.message);
-    }
-  }
-
-  const found = localStore.users.find(u => u.role === targetRole && u.pin_code === cleanPin);
-  if (!found) return null;
-  const { password_hash, ...safeUser } = found;
-  return safeUser;
-}
-
-async function createUser({ email, passwordHash, fullName, role, pinCode }) {
+async function createUser({ email, passwordHash, fullName, role }) {
   const normalizedEmail = email.trim().toLowerCase();
   const id = 'usr-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 5);
   const now = new Date().toISOString();
@@ -282,7 +355,6 @@ async function createUser({ email, passwordHash, fullName, role, pinCode }) {
             password_hash: passwordHash,
             full_name: fullName.trim(),
             role: role || 'attendee',
-            pin_code: pinCode || '1234',
             created_at: now,
             updated_at: now
           }
@@ -290,9 +362,7 @@ async function createUser({ email, passwordHash, fullName, role, pinCode }) {
         .select()
         .single();
 
-      if (!error && data) {
-        return data;
-      }
+      if (!error && data) return data;
       console.warn('[Supabase] createUser error, falling back to local store:', error?.message);
     } catch (err) {
       console.warn('[Supabase] createUser exception:', err.message);
@@ -305,7 +375,6 @@ async function createUser({ email, passwordHash, fullName, role, pinCode }) {
     password_hash: passwordHash,
     full_name: fullName.trim(),
     role: role || 'attendee',
-    pin_code: pinCode || '1234',
     created_at: now,
     updated_at: now
   };
@@ -339,20 +408,28 @@ async function logAudit({ userId, email, action, role, ip, userAgent }) {
   localStore.auditLogs.unshift({
     id: 'log-' + Date.now(),
     user_id: userId || null,
-    email: auditEntry.email,
-    action: auditEntry.action,
-    role: auditEntry.role,
-    ip_address: auditEntry.ip_address,
-    user_agent: auditEntry.user_agent,
-    created_at: auditEntry.created_at
+    ...auditEntry
   });
   if (localStore.auditLogs.length > 200) localStore.auditLogs.pop();
   saveLocalStore();
 }
 
 // ----------------------------------------------------
-// Event & Ticket Operations (Supabase with Local Fallback)
+// Event & Ticket Operations
 // ----------------------------------------------------
+function mapEventRow(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    name: row.name,
+    venue: row.venue || '',
+    date: row.event_date || '',
+    capacity: Number(row.capacity || 100),
+    status: row.status || 'active',
+    description: row.description || '',
+    activeQrCode: row.active_qr_code || null
+  };
+}
 
 function mapTicketRow(row) {
   if (!row) return null;
@@ -361,7 +438,7 @@ function mapTicketRow(row) {
     eventId: row.event_id,
     fullName: row.full_name,
     email: row.email,
-    diet: row.diet,
+    diet: row.diet || 'Veg',
     registeredAt: row.registered_at,
     gateCheckedIn: Boolean(row.gate_checked_in),
     gateCheckedInAt: row.gate_checked_in_at || null,
@@ -371,54 +448,67 @@ function mapTicketRow(row) {
   };
 }
 
+async function listEvents() {
+  if (isConfigured && supabase) {
+    const { data, error } = await supabase
+      .from('events')
+      .select('id, name, venue, event_date, capacity, status, description, active_qr_code')
+      .order('id', { ascending: true });
+
+    if (error) throw new Error(`Supabase listEvents failed: ${error.message}`);
+    return (data || []).map(mapEventRow);
+  }
+
+  return (localStore.events || []).map(mapEventRow);
+}
+
 async function getEvent(eventId = 'E01') {
   if (isConfigured && supabase) {
     const { data, error } = await supabase
       .from('events')
-      .select('id, name, venue, event_date, capacity')
+      .select('id, name, venue, event_date, capacity, status, description, active_qr_code')
       .eq('id', eventId)
       .maybeSingle();
 
-    if (error) {
-      console.warn('[Supabase] getEvent error:', error.message);
-    } else if (data) {
-      return {
-        id: data.id,
-        name: data.name,
-        venue: data.venue,
-        date: data.event_date,
-        capacity: data.capacity
-      };
-    }
+    if (error) throw new Error(`Supabase getEvent failed: ${error.message}`);
+    if (data) return mapEventRow(data);
   }
 
-  const ev = (localStore.events || []).find(e => e.id === eventId) || DEFAULT_EVENT;
-  return {
-    id: ev.id,
-    name: ev.name,
-    venue: ev.venue,
-    date: ev.event_date,
-    capacity: ev.capacity
-  };
+  const ev = (localStore.events || []).find(e => e.id === eventId);
+  return mapEventRow(ev) || mapEventRow(getDefaultEvents()[0]);
 }
 
-async function listTickets(eventId = 'E01') {
+async function setEventQrCode(eventId, qrCode) {
   if (isConfigured && supabase) {
     const { data, error } = await supabase
-      .from('tickets')
-      .select('*')
-      .eq('event_id', eventId)
-      .order('registered_at', { ascending: true });
+      .from('events')
+      .update({ active_qr_code: qrCode })
+      .eq('id', eventId)
+      .select('id, name, venue, event_date, capacity, status, description, active_qr_code')
+      .single();
 
-    if (error) {
-      throw new Error(`Supabase listTickets failed: ${error.message}`);
-    }
+    if (error) throw new Error(`Supabase setEventQrCode failed: ${error.message}`);
+    return mapEventRow(data);
+  }
+
+  const idx = (localStore.events || []).findIndex(e => e.id === eventId);
+  if (idx === -1) return null;
+  localStore.events[idx].active_qr_code = qrCode;
+  saveLocalStore();
+  return mapEventRow(localStore.events[idx]);
+}
+
+async function listTickets(eventId = null) {
+  if (isConfigured && supabase) {
+    let query = supabase.from('tickets').select('*').order('registered_at', { ascending: true });
+    if (eventId) query = query.eq('event_id', eventId);
+    const { data, error } = await query;
+    if (error) throw new Error(`Supabase listTickets failed: ${error.message}`);
     return (data || []).map(mapTicketRow);
   }
 
-  return (localStore.tickets || [])
-    .filter(t => t.event_id === eventId)
-    .map(mapTicketRow);
+  const rows = localStore.tickets || [];
+  return (eventId ? rows.filter(t => t.event_id === eventId) : rows).map(mapTicketRow);
 }
 
 async function findTicketByEmail(eventId = 'E01', email) {
@@ -432,9 +522,7 @@ async function findTicketByEmail(eventId = 'E01', email) {
       .ilike('email', normalizedEmail)
       .maybeSingle();
 
-    if (error) {
-      throw new Error(`Supabase findTicketByEmail failed: ${error.message}`);
-    }
+    if (error) throw new Error(`Supabase findTicketByEmail failed: ${error.message}`);
     return mapTicketRow(data);
   }
 
@@ -454,9 +542,7 @@ async function findTicketById(ticketId) {
       .eq('ticket_id', normalizedId)
       .maybeSingle();
 
-    if (error) {
-      throw new Error(`Supabase findTicketById failed: ${error.message}`);
-    }
+    if (error) throw new Error(`Supabase findTicketById failed: ${error.message}`);
     return mapTicketRow(data);
   }
 
@@ -464,15 +550,15 @@ async function findTicketById(ticketId) {
   return mapTicketRow(found);
 }
 
-async function createTicket({ ticketId, eventId = 'E01', fullName, email, diet }) {
+async function createTicket({ ticketId, eventId = 'E01', fullName, email, diet = 'Veg', gateCheckedIn = false, gateCheckedInAt = null }) {
   const row = {
     ticket_id: ticketId,
     event_id: eventId,
     full_name: fullName.trim(),
     email: email.trim().toLowerCase(),
     diet,
-    gate_checked_in: false,
-    gate_checked_in_at: null,
+    gate_checked_in: gateCheckedIn,
+    gate_checked_in_at: gateCheckedInAt,
     meal_claimed: false,
     meal_claimed_at: null,
     duplicate_attempts: 0,
@@ -486,9 +572,7 @@ async function createTicket({ ticketId, eventId = 'E01', fullName, email, diet }
       .select()
       .single();
 
-    if (error) {
-      throw new Error(`Supabase createTicket failed: ${error.message}`);
-    }
+    if (error) throw new Error(`Supabase createTicket failed: ${error.message}`);
     return mapTicketRow(data);
   }
 
@@ -514,9 +598,7 @@ async function updateTicketById(ticketId, updates) {
       .select()
       .single();
 
-    if (error) {
-      throw new Error(`Supabase updateTicketById failed: ${error.message}`);
-    }
+    if (error) throw new Error(`Supabase updateTicketById failed: ${error.message}`);
     return mapTicketRow(data);
   }
 
@@ -528,26 +610,14 @@ async function updateTicketById(ticketId, updates) {
 }
 
 async function resetTickets(eventId = 'E01') {
-  const samples = getSampleTickets().map(s => ({ ...s, event_id: eventId }));
+  const samples = getSampleTickets().filter(s => s.event_id === eventId);
 
   if (isConfigured && supabase) {
-    const { error: delError } = await supabase
-      .from('tickets')
-      .delete()
-      .eq('event_id', eventId);
-
-    if (delError) {
-      throw new Error(`Supabase resetTickets delete failed: ${delError.message}`);
-    }
-
-    const { data, error: insError } = await supabase
-      .from('tickets')
-      .insert(samples)
-      .select();
-
-    if (insError) {
-      throw new Error(`Supabase resetTickets insert failed: ${insError.message}`);
-    }
+    const { error: delError } = await supabase.from('tickets').delete().eq('event_id', eventId);
+    if (delError) throw new Error(`Supabase resetTickets delete failed: ${delError.message}`);
+    if (samples.length === 0) return [];
+    const { data, error: insError } = await supabase.from('tickets').insert(samples).select();
+    if (insError) throw new Error(`Supabase resetTickets insert failed: ${insError.message}`);
     return (data || []).map(mapTicketRow);
   }
 
@@ -559,20 +629,178 @@ async function resetTickets(eventId = 'E01') {
   return samples.map(mapTicketRow);
 }
 
+// ----------------------------------------------------
+// Notifications & Chat Operations
+// ----------------------------------------------------
+async function listNotifications(email) {
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+
+  if (isConfigured && supabase) {
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('id, user_email, title, body, unread, created_at')
+      .in('user_email', [normalizedEmail, '*'])
+      .order('created_at', { ascending: false })
+      .limit(20);
+
+    if (error) throw new Error(`Supabase listNotifications failed: ${error.message}`);
+    return (data || []).map(n => ({
+      id: n.id,
+      title: n.title,
+      body: n.body,
+      unread: Boolean(n.unread),
+      createdAt: n.created_at
+    }));
+  }
+
+  return (localStore.notifications || [])
+    .filter(n => n.user_email === normalizedEmail || n.user_email === '*')
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, 20)
+    .map(n => ({
+      id: n.id,
+      title: n.title,
+      body: n.body,
+      unread: Boolean(n.unread),
+      createdAt: n.created_at
+    }));
+}
+
+async function createNotification({ userEmail, title, body }) {
+  const entry = {
+    user_email: String(userEmail || '*').trim().toLowerCase(),
+    title,
+    body,
+    unread: true,
+    created_at: new Date().toISOString()
+  };
+
+  if (isConfigured && supabase) {
+    const { data, error } = await supabase
+      .from('notifications')
+      .insert([entry])
+      .select()
+      .single();
+    if (!error && data) return data;
+  }
+
+  const localEntry = { id: 'notif-' + Date.now(), ...entry };
+  localStore.notifications.unshift(localEntry);
+  if (localStore.notifications.length > 100) localStore.notifications.pop();
+  saveLocalStore();
+  return localEntry;
+}
+
+async function markAllNotificationsRead(email) {
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+
+  if (isConfigured && supabase) {
+    const { error } = await supabase
+      .from('notifications')
+      .update({ unread: false })
+      .in('user_email', [normalizedEmail, '*'])
+      .eq('unread', true);
+    if (error) throw new Error(`Supabase markAllNotificationsRead failed: ${error.message}`);
+    return true;
+  }
+
+  localStore.notifications = (localStore.notifications || []).map(n =>
+    n.user_email === normalizedEmail || n.user_email === '*' ? { ...n, unread: false } : n
+  );
+  saveLocalStore();
+  return true;
+}
+
+async function listChatMessages() {
+  if (isConfigured && supabase) {
+    const { data, error } = await supabase
+      .from('chat_messages')
+      .select('id, sender_name, sender_email, sender_role, message, created_at')
+      .order('created_at', { ascending: true })
+      .limit(50);
+
+    if (error) throw new Error(`Supabase listChatMessages failed: ${error.message}`);
+    return (data || []).map(m => ({
+      id: m.id,
+      senderName: m.sender_name,
+      senderEmail: m.sender_email,
+      senderRole: m.sender_role,
+      message: m.message,
+      createdAt: m.created_at
+    }));
+  }
+
+  return (localStore.chatMessages || [])
+    .slice(-50)
+    .map(m => ({
+      id: m.id,
+      senderName: m.sender_name,
+      senderEmail: m.sender_email,
+      senderRole: m.sender_role,
+      message: m.message,
+      createdAt: m.created_at
+    }));
+}
+
+async function createChatMessage({ senderName, senderEmail, senderRole, message }) {
+  const entry = {
+    sender_name: senderName,
+    sender_email: senderEmail,
+    sender_role: senderRole,
+    message: message.trim(),
+    created_at: new Date().toISOString()
+  };
+
+  if (isConfigured && supabase) {
+    const { data, error } = await supabase
+      .from('chat_messages')
+      .insert([entry])
+      .select()
+      .single();
+    if (error) throw new Error(`Supabase createChatMessage failed: ${error.message}`);
+    return {
+      id: data.id,
+      senderName: data.sender_name,
+      senderEmail: data.sender_email,
+      senderRole: data.sender_role,
+      message: data.message,
+      createdAt: data.created_at
+    };
+  }
+
+  const localEntry = { id: 'chat-' + Date.now(), ...entry };
+  localStore.chatMessages.push(localEntry);
+  if (localStore.chatMessages.length > 100) localStore.chatMessages.shift();
+  saveLocalStore();
+  return {
+    id: localEntry.id,
+    senderName: localEntry.sender_name,
+    senderEmail: localEntry.sender_email,
+    senderRole: localEntry.sender_role,
+    message: localEntry.message,
+    createdAt: localEntry.created_at
+  };
+}
+
 module.exports = {
   supabase,
   isSupabaseConfigured: () => isConfigured,
   findUserByEmail,
   findUserById,
-  findUserByRoleAndPin,
   createUser,
   logAudit,
-  getLocalUsers: () => localStore.users.map(({ password_hash, ...u }) => u),
+  listEvents,
   getEvent,
+  setEventQrCode,
   listTickets,
   findTicketByEmail,
   findTicketById,
   createTicket,
   updateTicketById,
-  resetTickets
+  resetTickets,
+  listNotifications,
+  createNotification,
+  markAllNotificationsRead,
+  listChatMessages,
+  createChatMessage
 };

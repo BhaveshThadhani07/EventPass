@@ -26,7 +26,3 @@
     "jsonwebtoken": "^9.0.2"
   }
 }
-
-
-// why are we using python instead of node.js?
-// why are we not using javascript instead of python for qr code scanner?
