@@ -31,6 +31,11 @@ if (supabaseUrl && supabaseKey && supabaseUrl.startsWith('http') && !supabaseUrl
 const LOCAL_STORE_FILE = path.join(__dirname, 'local_auth_store.json');
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+function persistLocalStore(data) {
+  if (process.env.VERCEL) return;
+  fs.writeFileSync(LOCAL_STORE_FILE, JSON.stringify(data, null, 2), 'utf8');
+}
+
 function getDefaultEvents() {
   const now = new Date().toISOString();
   return [
@@ -219,7 +224,7 @@ function initLocalStore() {
           updated = true;
         }
         if (updated) {
-          fs.writeFileSync(LOCAL_STORE_FILE, JSON.stringify(data, null, 2), 'utf8');
+          persistLocalStore(data);
         }
         return data;
       }
@@ -280,7 +285,7 @@ function initLocalStore() {
     chatMessages: getDefaultChatMessages()
   };
 
-  fs.writeFileSync(LOCAL_STORE_FILE, JSON.stringify(initialData, null, 2), 'utf8');
+  persistLocalStore(initialData);
   return initialData;
 }
 
@@ -288,7 +293,7 @@ let localStore = initLocalStore();
 
 function saveLocalStore() {
   try {
-    fs.writeFileSync(LOCAL_STORE_FILE, JSON.stringify(localStore, null, 2), 'utf8');
+    persistLocalStore(localStore);
   } catch (err) {
     console.error('[LocalStore] Failed to save store:', err.message);
   }
