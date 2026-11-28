@@ -129,9 +129,177 @@
       "pin_code": "4321",
       "created_at": "2026-11-28T12:59:49.967Z",
       "updated_at": "2026-11-28T12:59:49.967Z"
+    },
+    {
+      "id": "usr-mx0fz54g-44148",
+      "email": "attendee_1795872260931@eventpass.edu",
+      "password_hash": "$2a$10$LjkuufKSd5fhwZQ3Awdc0umriSRloxLr7alcxQv5NK668wTl6.9pm",
+      "full_name": "Test Attendee",
+      "role": "attendee",
+      "created_at": "2026-11-28T13:24:21.040Z",
+      "updated_at": "2026-11-28T13:24:21.040Z"
+    },
+    {
+      "id": "usr-mx0g8r37-9r0x1",
+      "email": "attendee_1795872709318@eventpass.edu",
+      "password_hash": "$2a$10$DQY6Q57JCrf2JfRCjJymJeVZ51KjjAf7uqA2D1FnAsllj/ECwnuj6",
+      "full_name": "Test Attendee",
+      "role": "attendee",
+      "created_at": "2026-11-28T13:31:49.411Z",
+      "updated_at": "2026-11-28T13:31:49.411Z"
     }
   ],
   "auditLogs": [
+    {
+      "id": "log-1795873448071",
+      "user_id": null,
+      "email": "bhaveshthadhani7@gmail.com",
+      "action": "LOGIN",
+      "role": "volunteer",
+      "ip_address": "::1",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+      "created_at": "2026-11-28T13:44:08.071Z"
+    },
+    {
+      "id": "log-1795873428141",
+      "user_id": null,
+      "email": "bhaveshthadhani7@gmail.com",
+      "action": "LOGOUT",
+      "role": "volunteer",
+      "ip_address": "::1",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.7977.167 Safari/537.36 Antigravity/2.34.0",
+      "created_at": "2026-11-28T13:43:48.141Z"
+    },
+    {
+      "id": "log-1795873378420",
+      "user_id": null,
+      "email": "bhaveshthadhani7@gmail.com",
+      "action": "LOGIN",
+      "role": "volunteer",
+      "ip_address": "::1",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.7977.167 Safari/537.36 Antigravity/2.34.0",
+      "created_at": "2026-11-28T13:42:58.420Z"
+    },
+    {
+      "id": "log-1795873362849",
+      "user_id": null,
+      "email": "bhaveshthadhani7@gmail.com",
+      "action": "LOGOUT",
+      "role": "volunteer",
+      "ip_address": "::1",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.7977.167 Safari/537.36 Antigravity/2.34.0",
+      "created_at": "2026-11-28T13:42:42.849Z"
+    },
+    {
+      "id": "log-1795873358211",
+      "user_id": null,
+      "email": "bhaveshthadhani7@gmail.com",
+      "action": "LOGIN",
+      "role": "volunteer",
+      "ip_address": "::1",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.7977.167 Safari/537.36 Antigravity/2.34.0",
+      "created_at": "2026-11-28T13:42:38.211Z"
+    },
+    {
+      "id": "log-1795873341781",
+      "user_id": null,
+      "email": "bhaveshthadhani7@gmail.com",
+      "action": "LOGOUT",
+      "role": "volunteer",
+      "ip_address": "::1",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.7977.167 Safari/537.36 Antigravity/2.34.0",
+      "created_at": "2026-11-28T13:42:21.779Z"
+    },
+    {
+      "id": "log-1795872960782",
+      "user_id": null,
+      "email": "bhaveshthadhani7@gmail.com",
+      "action": "LOGOUT",
+      "role": "volunteer",
+      "ip_address": "::1",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+      "created_at": "2026-11-28T13:36:00.782Z"
+    },
+    {
+      "id": "log-1795872936035",
+      "user_id": null,
+      "email": "bhaveshthadhani7@gmail.com",
+      "action": "LOGIN",
+      "role": "volunteer",
+      "ip_address": "::1",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+      "created_at": "2026-11-28T13:35:36.035Z"
+    },
+    {
+      "id": "log-1795872709413",
+      "user_id": null,
+      "email": "attendee_1795872709318@eventpass.edu",
+      "action": "REGISTER",
+      "role": "attendee",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-28T13:31:49.413Z"
+    },
+    {
+      "id": "log-1795872709317",
+      "user_id": null,
+      "email": "bhavesh@eventpass.edu",
+      "action": "FAILED_LOGIN",
+      "role": "organizer",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-28T13:31:49.317Z"
+    },
+    {
+      "id": "log-1795872709231",
+      "user_id": null,
+      "email": "bhavesh@eventpass.edu",
+      "action": "LOGIN",
+      "role": "organizer",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-28T13:31:49.230Z"
+    },
+    {
+      "id": "log-1795872351730",
+      "user_id": null,
+      "email": "bhaveshthadhani7@gmail.com",
+      "action": "LOGIN",
+      "role": "volunteer",
+      "ip_address": "::1",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.7977.167 Safari/537.36 Antigravity/2.34.0",
+      "created_at": "2026-11-28T13:25:51.730Z"
+    },
+    {
+      "id": "log-1795872261041",
+      "user_id": null,
+      "email": "attendee_1795872260931@eventpass.edu",
+      "action": "REGISTER",
+      "role": "attendee",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-28T13:24:21.041Z"
+    },
+    {
+      "id": "log-1795872260930",
+      "user_id": null,
+      "email": "bhavesh@eventpass.edu",
+      "action": "FAILED_LOGIN",
+      "role": "organizer",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-28T13:24:20.930Z"
+    },
+    {
+      "id": "log-1795872260833",
+      "user_id": null,
+      "email": "bhavesh@eventpass.edu",
+      "action": "LOGIN",
+      "role": "organizer",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-28T13:24:20.833Z"
+    },
     {
       "id": "log-1795871497039",
       "user_id": "usr-mwryglel-f82vi",
@@ -535,12 +703,92 @@
   ],
   "events": [
     {
+      "id": "E08-B8F5",
+      "name": "QUANTUM COMPUTING WORKSHOP",
+      "venue": "Bengaluru Tech Park",
+      "event_date": "Dec 20, 2026",
+      "capacity": 70,
+      "status": "passive",
+      "description": "learn the fundamentals of quantum computing",
+      "active_qr_code": "#EP-2026-1831-4E69",
+      "created_at": "2026-11-28T13:33:43.453Z"
+    },
+    {
+      "id": "E07-1525",
+      "name": "AI Agents Workshop",
+      "venue": "Auditorium A",
+      "event_date": "Dec 25, 2026",
+      "capacity": 120,
+      "status": "passive",
+      "description": "Organized by Bhavesh Thadhani.",
+      "active_qr_code": null,
+      "created_at": "2026-11-28T13:31:49.419Z"
+    },
+    {
       "id": "E01",
-      "name": "Intro to Web Dev Workshop",
+      "name": "OJT Sprint Demo Day",
+      "venue": "Innovation Lab",
+      "event_date": "Nov 30, 2026",
+      "capacity": 200,
+      "status": "passive",
+      "description": "Live full-stack architecture and Liquid Glass UI evaluation with faculty mentors.",
+      "active_qr_code": "#EP-2026-7597-B6C3",
+      "created_at": "2026-11-28T13:24:20.732Z"
+    },
+    {
+      "id": "E02",
+      "name": "Bengaluru Student Hackathon",
+      "venue": "Open Arena",
+      "event_date": "Dec 09, 2026",
+      "capacity": 350,
+      "status": "active",
+      "description": "24-hour rapid build sprint with instant roster sync.",
+      "active_qr_code": "#EP-2026-6606-5B3C",
+      "created_at": "2026-11-28T13:24:20.732Z"
+    },
+    {
+      "id": "E03",
+      "name": "Winter Open-Source Code Sprint",
+      "venue": "Tech Hub",
+      "event_date": "Dec 18, 2026",
+      "capacity": 120,
+      "status": "active",
+      "description": "Collaborative pull-request sprint and mentor code review session.",
+      "active_qr_code": null,
+      "created_at": "2026-11-28T13:24:20.732Z"
+    },
+    {
+      "id": "E04",
+      "name": "Constellation 2026 Campus Launch",
+      "venue": "Main Auditorium",
+      "event_date": "Aug 24, 2026",
+      "capacity": 500,
+      "status": "passive",
+      "description": "Polaris School of Technology orientation showcase and campus event launch.",
+      "active_qr_code": null,
+      "created_at": "2026-11-28T13:24:20.732Z"
+    },
+    {
+      "id": "E05",
+      "name": "Cloud & Applied AI Track Workshop",
       "venue": "Seminar Hall B",
-      "event_date": "2026-11-14",
-      "capacity": 50,
-      "created_at": "2026-11-28T07:19:09.765Z"
+      "event_date": "Oct 15, 2026",
+      "capacity": 200,
+      "status": "passive",
+      "description": "Hands-on deployment lab covering cloud runtimes, API authentication, and telemetry.",
+      "active_qr_code": null,
+      "created_at": "2026-11-28T13:24:20.732Z"
+    },
+    {
+      "id": "E06",
+      "name": "Freshers Induction & Club Fair",
+      "venue": "Central Courtyard",
+      "event_date": "Sep 05, 2026",
+      "capacity": 550,
+      "status": "passive",
+      "description": "Past campus induction event retained for audit and OJT reporting.",
+      "active_qr_code": null,
+      "created_at": "2026-11-28T13:24:20.732Z"
     }
   ],
   "tickets": [
@@ -621,6 +869,166 @@
       "meal_claimed_at": "2026-11-28T12:59:50.165Z",
       "duplicate_attempts": 1,
       "registered_at": "2026-11-28T12:59:50.153Z"
+    },
+    {
+      "ticket_id": "EP-R8AK-SAWH",
+      "event_id": "E02",
+      "full_name": "Test Attendee",
+      "email": "attendee_1795872260931@eventpass.edu",
+      "diet": "Veg",
+      "gate_checked_in": false,
+      "gate_checked_in_at": null,
+      "meal_claimed": false,
+      "meal_claimed_at": null,
+      "duplicate_attempts": 0,
+      "registered_at": "2026-11-28T13:24:21.049Z"
+    },
+    {
+      "ticket_id": "EP-NPVS-AKP9",
+      "event_id": "E01",
+      "full_name": "Test Attendee",
+      "email": "attendee_1795872260931@eventpass.edu",
+      "diet": "Veg",
+      "gate_checked_in": true,
+      "gate_checked_in_at": "2026-11-28T13:24:21.051Z",
+      "meal_claimed": false,
+      "meal_claimed_at": null,
+      "duplicate_attempts": 1,
+      "registered_at": "2026-11-28T13:24:21.051Z"
+    },
+    {
+      "ticket_id": "EP-4K4M-ZE9A",
+      "event_id": "E02",
+      "full_name": "Test Attendee",
+      "email": "attendee_1795872709318@eventpass.edu",
+      "diet": "Veg",
+      "gate_checked_in": false,
+      "gate_checked_in_at": null,
+      "meal_claimed": false,
+      "meal_claimed_at": null,
+      "duplicate_attempts": 0,
+      "registered_at": "2026-11-28T13:31:49.423Z"
+    },
+    {
+      "ticket_id": "EP-KDHW-CW2T",
+      "event_id": "E01",
+      "full_name": "Test Attendee",
+      "email": "attendee_1795872709318@eventpass.edu",
+      "diet": "Veg",
+      "gate_checked_in": true,
+      "gate_checked_in_at": "2026-11-28T13:31:49.425Z",
+      "meal_claimed": false,
+      "meal_claimed_at": null,
+      "duplicate_attempts": 1,
+      "registered_at": "2026-11-28T13:31:49.425Z"
+    }
+  ],
+  "notifications": [
+    {
+      "id": "notif-1795872823455",
+      "user_email": "*",
+      "title": "New Event: QUANTUM COMPUTING WORKSHOP",
+      "body": "Dec 20, 2026 at Bengaluru Tech Park. Registration is now open!",
+      "unread": false,
+      "created_at": "2026-11-28T13:33:43.455Z"
+    },
+    {
+      "id": "notif-1795872709425",
+      "user_email": "attendee_1795872709318@eventpass.edu",
+      "title": "Checked In: OJT Sprint Demo Day",
+      "body": "Gate check-in verified (EP-KDHW-CW2T) at Innovation Lab.",
+      "unread": false,
+      "created_at": "2026-11-28T13:31:49.425Z"
+    },
+    {
+      "id": "notif-1795872709424",
+      "user_email": "attendee_1795872709318@eventpass.edu",
+      "title": "Pass Issued: Bengaluru Student Hackathon",
+      "body": "Your ticket EP-4K4M-ZE9A is confirmed for Open Arena.",
+      "unread": false,
+      "created_at": "2026-11-28T13:31:49.424Z"
+    },
+    {
+      "id": "notif-1795872709420",
+      "user_email": "*",
+      "title": "New Event: AI Agents Workshop",
+      "body": "Dec 25, 2026 at Auditorium A. Registration is now open!",
+      "unread": false,
+      "created_at": "2026-11-28T13:31:49.420Z"
+    },
+    {
+      "id": "notif-1795872261052",
+      "user_email": "attendee_1795872260931@eventpass.edu",
+      "title": "Checked In: OJT Sprint Demo Day",
+      "body": "Gate check-in verified (EP-NPVS-AKP9) at Innovation Lab.",
+      "unread": false,
+      "created_at": "2026-11-28T13:24:21.052Z"
+    },
+    {
+      "id": "notif-1795872261050",
+      "user_email": "attendee_1795872260931@eventpass.edu",
+      "title": "Pass Issued: Bengaluru Student Hackathon",
+      "body": "Your ticket EP-R8AK-SAWH is confirmed for Open Arena.",
+      "unread": false,
+      "created_at": "2026-11-28T13:24:21.050Z"
+    },
+    {
+      "id": "notif-1",
+      "user_email": "*",
+      "title": "Ongoing Event: OJT Sprint Demo Day",
+      "body": "Gate check-in is open at Innovation Lab.",
+      "unread": false,
+      "created_at": "2026-11-28T13:12:20.733Z"
+    },
+    {
+      "id": "notif-2",
+      "user_email": "*",
+      "title": "Bengaluru Student Hackathon",
+      "body": "Team registrations are now live for Open Arena.",
+      "unread": false,
+      "created_at": "2026-11-28T11:24:20.733Z"
+    }
+  ],
+  "chatMessages": [
+    {
+      "id": "chat-1",
+      "sender_name": "OJT Coordinator Desk",
+      "sender_email": "bhavesh@eventpass.edu",
+      "sender_role": "organizer",
+      "message": "Welcome to EventPass! Register for any active event and scan the gate QR code on arrival.",
+      "created_at": "2026-11-28T12:24:20.733Z"
+    },
+    {
+      "id": "chat-2",
+      "sender_name": "Gate Lead (Innovation Lab)",
+      "sender_email": "aniket@eventpass.edu",
+      "sender_role": "organizer",
+      "message": "Reminder: Keep your QR scanner ready when arriving at the venue.",
+      "created_at": "2026-11-28T12:54:20.733Z"
+    },
+    {
+      "id": "chat-1795872261056",
+      "sender_name": "Test Attendee",
+      "sender_email": "attendee_1795872260931@eventpass.edu",
+      "sender_role": "attendee",
+      "message": "Hello Desk!",
+      "created_at": "2026-11-28T13:24:21.056Z"
+    },
+    {
+      "id": "chat-1795872709431",
+      "sender_name": "Test Attendee",
+      "sender_email": "attendee_1795872709318@eventpass.edu",
+      "sender_role": "attendee",
+      "message": "Hello Desk!",
+      "created_at": "2026-11-28T13:31:49.431Z"
+    },
+    {
+      "id": "chat-1795872909233",
+      "sender_name": "Bhavesh Thadhani",
+      "sender_email": "bhaveshthadhani7@gmail.com",
+      "sender_role": "volunteer",
+      "message": "Hi",
+      "created_at": "2026-11-28T13:35:09.233Z"
     }
   ]
 }

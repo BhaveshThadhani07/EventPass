@@ -782,6 +782,57 @@ async function createChatMessage({ senderName, senderEmail, senderRole, message 
   };
 }
 
+async function createEvent({ id, name, venue, date, capacity = 100, description = '' }) {
+  const row = {
+    id,
+    name: name.trim(),
+    venue: (venue || 'Campus Venue').trim(),
+    event_date: (date || 'TBD').trim(),
+    capacity: Math.max(1, Number(capacity) || 100),
+    status: 'active',
+    description: (description || '').trim(),
+    active_qr_code: null,
+    created_at: new Date().toISOString()
+  };
+
+  if (isConfigured && supabase) {
+    const { data, error } = await supabase
+      .from('events')
+      .insert([row])
+      .select('id, name, venue, event_date, capacity, status, description, active_qr_code')
+      .single();
+
+    if (error) throw new Error(`Supabase createEvent failed: ${error.message}`);
+    return mapEventRow(data);
+  }
+
+  localStore.events.unshift(row);
+  saveLocalStore();
+  return mapEventRow(row);
+}
+
+async function updateEventStatus(eventId, status) {
+  const nextStatus = status === 'passive' ? 'passive' : 'active';
+
+  if (isConfigured && supabase) {
+    const { data, error } = await supabase
+      .from('events')
+      .update({ status: nextStatus })
+      .eq('id', eventId)
+      .select('id, name, venue, event_date, capacity, status, description, active_qr_code')
+      .single();
+
+    if (error) throw new Error(`Supabase updateEventStatus failed: ${error.message}`);
+    return mapEventRow(data);
+  }
+
+  const idx = (localStore.events || []).findIndex(e => e.id === eventId);
+  if (idx === -1) return null;
+  localStore.events[idx].status = nextStatus;
+  saveLocalStore();
+  return mapEventRow(localStore.events[idx]);
+}
+
 module.exports = {
   supabase,
   isSupabaseConfigured: () => isConfigured,
@@ -791,6 +842,8 @@ module.exports = {
   logAudit,
   listEvents,
   getEvent,
+  createEvent,
+  updateEventStatus,
   setEventQrCode,
   listTickets,
   findTicketByEmail,

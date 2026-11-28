@@ -8,6 +8,8 @@ const router = express.Router();
 const {
   listEvents,
   getEvent,
+  createEvent,
+  updateEventStatus,
   setEventQrCode,
   listTickets,
   findTicketByEmail,
@@ -96,8 +98,68 @@ router.get('/events', authenticateToken, async (req, res) => {
   }
 });
 
-// 3. GENERATE SCANNABLE EVENT QR TOKEN (Organizer)
-router.post('/events/:eventId/qr', authenticateToken, requireRole(['organizer']), async (req, res) => {
+// 2b. ORGANIZE / CREATE NEW EVENT
+router.post('/events', authenticateToken, async (req, res) => {
+  try {
+    const name = String(req.body.name || '').trim();
+    const venue = String(req.body.venue || '').trim();
+    const date = String(req.body.date || '').trim();
+    const capacity = Number(req.body.capacity || 100);
+    const description = String(req.body.description || '').trim();
+
+    if (name.length < 2 || name.length > 80) {
+      return res.status(400).json({ success: false, error: 'Event name must be 2–80 characters.' });
+    }
+    if (!venue) {
+      return res.status(400).json({ success: false, error: 'Please enter a venue.' });
+    }
+    if (!Number.isFinite(capacity) || capacity < 1 || capacity > 5000) {
+      return res.status(400).json({ success: false, error: 'Capacity must be between 1 and 5000.' });
+    }
+
+    const existing = await listEvents();
+    const nextNum = existing.length + 1;
+    const id = 'E' + String(nextNum).padStart(2, '0') + '-' + crypto.randomBytes(2).toString('hex').toUpperCase();
+
+    const event = await createEvent({
+      id,
+      name,
+      venue,
+      date: date || 'Upcoming',
+      capacity: Math.round(capacity),
+      description: description || `Organized by ${req.user.fullName || req.user.email}.`
+    });
+
+    await createNotification({
+      userEmail: '*',
+      title: `New Event: ${event.name}`,
+      body: `${event.date} at ${event.venue}. Registration is now open!`
+    });
+
+    return res.status(201).json({ success: true, event });
+  } catch (err) {
+    console.error('[Event Create Error]:', err);
+    return res.status(500).json({ success: false, error: 'Failed to create event.' });
+  }
+});
+
+// 2c. TOGGLE EVENT ACTIVE / PASSIVE STATUS
+router.post('/events/:eventId/status', authenticateToken, async (req, res) => {
+  try {
+    const status = req.body.status === 'passive' ? 'passive' : 'active';
+    const updated = await updateEventStatus(req.params.eventId, status);
+    if (!updated) {
+      return res.status(404).json({ success: false, error: 'Event not found.' });
+    }
+    return res.json({ success: true, event: updated });
+  } catch (err) {
+    console.error('[Event Status Error]:', err);
+    return res.status(500).json({ success: false, error: 'Failed to update event status.' });
+  }
+});
+
+// 3. GENERATE SCANNABLE EVENT QR TOKEN
+router.post('/events/:eventId/qr', authenticateToken, async (req, res) => {
   try {
     const event = await getEvent(req.params.eventId);
     if (!event) {
