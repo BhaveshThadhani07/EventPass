@@ -150,3 +150,8 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO public.chat_messages (sender_name, sender_email, sender_role, message)
 SELECT 'OJT Coordinator Desk', 'bhavesh@eventpass.edu', 'organizer', 'Welcome to EventPass! Register for any active event and scan the gate QR code on arrival.'
 WHERE NOT EXISTS (SELECT 1 FROM public.chat_messages);
+
+-- 10. Grant API access for Supabase publishable / anon & authenticated keys
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
