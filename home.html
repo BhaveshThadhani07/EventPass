@@ -659,7 +659,7 @@
             <p id="yourEventsSubtitle">Events you have completed or have ongoing.</p>
           </div>
           <div class="nav-actions">
-            <button id="organizeEventBtn" type="button" class="btn-primary" style="display:none;">+ Organize Event</button>
+            <button id="organizeEventBtn" type="button" class="btn-primary">+ Organize Event</button>
             <div class="tabs" role="tablist">
               <button type="button" class="tab-btn is-active" data-your-filter="all">All</button>
               <button type="button" class="tab-btn" data-your-filter="assigned">Ongoing</button>
@@ -675,14 +675,17 @@
     <section id="view-qr" class="view-pane" aria-label="QR Code">
       <div class="section-head">
         <div>
-          <h2 id="qrHeading">EventPass QR Code</h2>
-          <p id="qrSubtitle">Present this scannable pass at the venue gate for check-in.</p>
+          <h2 id="qrHeading">Scan & Check In</h2>
+          <p id="qrSubtitle">Scan an event QR code to check in, or generate one for your event.</p>
         </div>
-        <span id="qrRoleTag" class="status-pill is-assigned">Attendee</span>
+        <div class="tabs" role="tablist">
+          <button id="qrTabScan" type="button" class="tab-btn is-active" role="tab" aria-selected="true">Scan & Check In</button>
+          <button id="qrTabGen" type="button" class="tab-btn" role="tab" aria-selected="false">Generate QR</button>
+        </div>
       </div>
 
-      <!-- ATTENDEE: Live Camera QR Scanner + Direct Code Check-in -->
-      <div id="attendeeScannerPanel" class="qr-panel" style="display:none;">
+      <!-- Live Camera QR Scanner + Direct Code Check-in -->
+      <div id="attendeeScannerPanel" class="qr-panel" style="display:flex;">
         <div class="scanner-stage">
           <video id="qrVideo" playsinline autoplay muted></video>
           <div class="scanner-reticle" aria-hidden="true">
@@ -791,8 +794,7 @@
 
     let currentUser = JSON.parse(rawUser || "{}");
     let displayName = (currentUser.fullName || currentUser.name || currentUser.email || "User").trim();
-    let isOrganizer = currentUser.role === "organizer" || currentUser.role === "volunteer";
-    let isAttendee = !isOrganizer;
+    let qrMode = "scan";
 
     let allEvents = [];
     let currentYourFilter = "all";
@@ -830,42 +832,39 @@
       return { ok: res.ok, status: res.status, data };
     }
 
+    function setQrMode(mode) {
+      qrMode = mode === "gen" ? "gen" : "scan";
+      const isScan = qrMode === "scan";
+      document.getElementById("qrTabScan").classList.toggle("is-active", isScan);
+      document.getElementById("qrTabScan").setAttribute("aria-selected", String(isScan));
+      document.getElementById("qrTabGen").classList.toggle("is-active", !isScan);
+      document.getElementById("qrTabGen").setAttribute("aria-selected", String(!isScan));
+      document.getElementById("attendeeScannerPanel").style.display = isScan ? "flex" : "none";
+      document.getElementById("staffQrPanel").style.display = isScan ? "none" : "flex";
+      document.getElementById("qrHeading").textContent = isScan ? "Scan & Check In" : "Generate Event QR";
+      document.getElementById("qrSubtitle").textContent = isScan
+        ? "Point your camera at an event QR code or enter the code below."
+        : "Generate a scannable check-in QR code for any active event.";
+      if (!isScan) {
+        stopScanner();
+        if (!document.getElementById("qrCanvas").innerHTML) {
+          generateOrganizerQr(false);
+        }
+      }
+    }
+
+    document.getElementById("qrTabScan").addEventListener("click", () => setQrMode("scan"));
+    document.getElementById("qrTabGen").addEventListener("click", () => setQrMode("gen"));
+
     function syncProfileUI() {
       displayName = (currentUser.fullName || currentUser.email || "User").trim();
-      isOrganizer = currentUser.role === "organizer" || currentUser.role === "volunteer";
-      isAttendee = !isOrganizer;
-
       document.getElementById("profileName").textContent = displayName;
       document.getElementById("profileAvatar").textContent = displayName.charAt(0).toUpperCase();
-      document.getElementById("profileRoleText").textContent = isOrganizer ? "Organizer" : "Attendee";
-      document.getElementById("profileSnippet").title = `${currentUser.email} (${currentUser.role})`;
+      document.getElementById("profileRoleText").textContent = "Signed in";
+      document.getElementById("profileSnippet").title = currentUser.email || displayName;
       document.getElementById("qrHolderName").textContent = displayName;
-      document.getElementById("organizeEventBtn").style.display = isOrganizer ? "inline-flex" : "none";
-      document.getElementById("yourEventsSubtitle").textContent = isOrganizer
-        ? "Create events, track registrations, and open check-in QR codes."
-        : "Events you have completed or have ongoing.";
-
-      const attendeeScannerPanel = document.getElementById("attendeeScannerPanel");
-      const staffQrPanel = document.getElementById("staffQrPanel");
-      const qrHeading = document.getElementById("qrHeading");
-      const qrRoleTag = document.getElementById("qrRoleTag");
-      const qrSubtitle = document.getElementById("qrSubtitle");
-
-      if (isAttendee) {
-        attendeeScannerPanel.style.display = "flex";
-        staffQrPanel.style.display = "none";
-        qrHeading.textContent = "Scan Event QR Code";
-        qrSubtitle.textContent = "Point your camera at the Organizer QR code to check in.";
-        qrRoleTag.textContent = "Attendee Scanner";
-        qrRoleTag.className = "status-pill is-assigned";
-      } else {
-        attendeeScannerPanel.style.display = "none";
-        staffQrPanel.style.display = "flex";
-        qrHeading.textContent = "Event Check-in QR Code";
-        qrSubtitle.textContent = "Generate a scannable check-in QR code for any active event.";
-        qrRoleTag.textContent = "Organizer Access";
-        qrRoleTag.className = "status-pill is-done";
-      }
+      document.getElementById("yourEventsSubtitle").textContent =
+        "Organize events, get passes, and manage check-ins.";
     }
 
     // Verify session on load
@@ -878,10 +877,7 @@
         syncProfileUI();
       }
       await Promise.all([loadEvents(), loadNotifications(), loadChat()]);
-      if (isOrganizer) {
-        populateQrSelect();
-        generateOrganizerQr(false);
-      }
+      populateQrSelect();
     })();
 
     // ----------------------------------------------------
@@ -893,33 +889,22 @@
       allEvents = res.data.events || [];
       renderYourEvents(currentYourFilter);
       renderAllEvents(currentAllTab);
-      if (isOrganizer) populateQrSelect();
+      populateQrSelect();
     }
 
     function getYourEventsList() {
-      if (isOrganizer) {
-        return allEvents.map(ev => ({
+      return allEvents.map(ev => {
+        const completed = ev.status === "passive";
+        const passNote = ev.myTicket
+          ? (ev.myTicket.gateCheckedIn ? `Checked in (${ev.myTicket.ticketId})` : `Pass: ${ev.myTicket.ticketId}`)
+          : `${ev.registeredCount} Registered • ${ev.checkedInCount} Checked In`;
+        return {
           ...ev,
-          yourStatus: ev.status === "passive" ? "done" : "assigned",
-          badge: ev.status === "passive" ? "Completed" : "Ongoing",
-          metaText: `${ev.registeredCount} Registered • ${ev.checkedInCount} Checked In`
-        }));
-      }
-
-      // Attendee: show events they have registered for
-      return allEvents
-        .filter(ev => ev.myTicket)
-        .map(ev => {
-          const completed = ev.status === "passive" || ev.myTicket.gateCheckedIn;
-          return {
-            ...ev,
-            yourStatus: completed ? "done" : "assigned",
-            badge: completed ? "Completed" : "Ongoing",
-            metaText: ev.myTicket.gateCheckedIn
-              ? `Checked in • Pass ${ev.myTicket.ticketId}`
-              : `Pass ${ev.myTicket.ticketId} • Ready for Gate QR`
-          };
-        });
+          yourStatus: completed ? "done" : "assigned",
+          badge: completed ? "Completed" : "Ongoing",
+          metaText: passNote
+        };
+      });
     }
 
     function renderYourEvents(filter = "all") {
@@ -940,7 +925,7 @@
           <article class="card">
             <div>
               <h3>No events yet</h3>
-              <p>Open <strong>View All</strong> at the top to register for an active event.</p>
+              <p>Click <strong>+ Organize Event</strong> or open <strong>View All</strong> to get started.</p>
             </div>
           </article>
         `;
@@ -960,15 +945,13 @@
           <div class="meta-row">
             <span>${escapeHtml(ev.metaText)}</span>
             <div class="org-actions">
-              ${isOrganizer && ev.status === "active"
+              ${ev.status === "active" && !ev.myTicket
+                ? `<button type="button" class="btn-primary" onclick="registerForEvent('${escapeHtml(ev.id)}', this)">Get Pass</button>`
+                : ""}
+              ${ev.status === "active"
                 ? `<button type="button" class="btn-ghost" onclick="openEventQr('${escapeHtml(ev.id)}')">QR</button>`
                 : ""}
-              ${isOrganizer
-                ? `<button type="button" class="btn-ghost" onclick="toggleEventStatus('${escapeHtml(ev.id)}', '${ev.status === "active" ? "passive" : "active"}')">${ev.status === "active" ? "Close" : "Reopen"}</button>`
-                : ""}
-              ${isAttendee && ev.myTicket && !ev.myTicket.gateCheckedIn && ev.status === "active"
-                ? `<button type="button" class="btn-ghost" onclick="switchView('qr')">Check In</button>`
-                : ""}
+              <button type="button" class="btn-ghost" onclick="toggleEventStatus('${escapeHtml(ev.id)}', '${ev.status === "active" ? "passive" : "active"}')">${ev.status === "active" ? "Close" : "Reopen"}</button>
             </div>
           </div>
         </article>
@@ -987,12 +970,10 @@
 
       grid.innerHTML = list.map(ev => {
         let actionHtml = "";
-        if (tab === "active" && isAttendee) {
-          if (ev.myTicket) {
-            actionHtml = `<span class="status-pill is-done">Pass: ${escapeHtml(ev.myTicket.ticketId)}</span>`;
-          } else {
-            actionHtml = `<button type="button" class="btn-primary" onclick="registerForEvent('${escapeHtml(ev.id)}', this)">Get Pass</button>`;
-          }
+        if (tab === "active") {
+          actionHtml = ev.myTicket
+            ? `<span class="status-pill is-done">Pass: ${escapeHtml(ev.myTicket.ticketId)}</span>`
+            : `<button type="button" class="btn-primary" onclick="registerForEvent('${escapeHtml(ev.id)}', this)">Get Pass</button>`;
         }
         return `
           <article class="card">
@@ -1085,7 +1066,7 @@
         document.getElementById("orgEventCap").value = "100";
         organizeDrawer.classList.remove("is-open");
         await Promise.all([loadEvents(), loadNotifications()]);
-        if (isOrganizer && res.data.event) {
+        if (res.data.event) {
           qrEventSelect.value = res.data.event.id;
           generateOrganizerQr(false);
         }
@@ -1106,6 +1087,7 @@
 
     window.openEventQr = async function(eventId) {
       window.switchView("qr");
+      setQrMode("gen");
       qrEventSelect.value = eventId;
       await generateOrganizerQr(true);
     };
@@ -1206,7 +1188,7 @@
     }
 
     async function startScanner() {
-      if (!isAttendee) return;
+      if (qrMode !== "scan") return;
       stopScanner();
       scanResult.className = "scan-result";
       scanStatus.classList.remove("is-error");
@@ -1272,8 +1254,8 @@
     }
 
     async function generateOrganizerQr(isFreshClick = false) {
-      if (!isOrganizer) return;
-      const eventId = qrEventSelect.value || "E01";
+      const eventId = qrEventSelect.value;
+      if (!eventId) return;
       const res = await api(`/api/events/${encodeURIComponent(eventId)}/qr`, { method: "POST" });
       if (!res.ok || !res.data.success) return;
 
@@ -1332,7 +1314,7 @@
       });
       viewAllBtn.style.display = target === "home" ? "inline-block" : "none";
 
-      if (target === "qr" && isAttendee) {
+      if (target === "qr" && qrMode === "scan") {
         startScanner();
       } else {
         stopScanner();

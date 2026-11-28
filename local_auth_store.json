@@ -147,9 +147,87 @@
       "role": "attendee",
       "created_at": "2026-11-28T13:31:49.411Z",
       "updated_at": "2026-11-28T13:31:49.411Z"
+    },
+    {
+      "id": "usr-mx0gz48i-9dmw9",
+      "email": "attendee_1795873939421@eventpass.edu",
+      "password_hash": "$2a$10$iEnrF9xA8OWBv0BbQbxYQ.v7/10aedhK/pNwfNM.Ze9E5Gs5PShC.",
+      "full_name": "Test Attendee",
+      "role": "attendee",
+      "created_at": "2026-11-28T13:52:19.506Z",
+      "updated_at": "2026-11-28T13:52:19.506Z"
+    },
+    {
+      "id": "usr-mx0h19s2-4tl6g",
+      "email": "attendee_1795874038322@eventpass.edu",
+      "password_hash": "$2a$10$/d0Hsx4xv3.gWhwhnbXbmuFzzH8jYnEMbMl923yXUYdKh2yjX58zO",
+      "full_name": "Test Attendee",
+      "role": "attendee",
+      "created_at": "2026-11-28T13:54:00.003Z",
+      "updated_at": "2026-11-28T13:54:00.003Z"
     }
   ],
   "auditLogs": [
+    {
+      "id": "log-1795874040005",
+      "user_id": null,
+      "email": "attendee_1795874038322@eventpass.edu",
+      "action": "REGISTER",
+      "role": "attendee",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-28T13:54:00.005Z"
+    },
+    {
+      "id": "log-1795874038321",
+      "user_id": null,
+      "email": "bhavesh@eventpass.edu",
+      "action": "FAILED_LOGIN",
+      "role": "organizer",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-28T13:53:58.321Z"
+    },
+    {
+      "id": "log-1795874036719",
+      "user_id": null,
+      "email": "bhavesh@eventpass.edu",
+      "action": "LOGIN",
+      "role": "organizer",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-28T13:53:56.717Z"
+    },
+    {
+      "id": "log-1795873939507",
+      "user_id": null,
+      "email": "attendee_1795873939421@eventpass.edu",
+      "action": "REGISTER",
+      "role": "attendee",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-28T13:52:19.507Z"
+    },
+    {
+      "id": "log-1795873939420",
+      "user_id": null,
+      "email": "bhavesh@eventpass.edu",
+      "action": "FAILED_LOGIN",
+      "role": "organizer",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-28T13:52:19.420Z"
+    },
+    {
+      "id": "log-1795873939321",
+      "user_id": null,
+      "email": "bhavesh@eventpass.edu",
+      "action": "LOGIN",
+      "role": "organizer",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Browser",
+      "created_at": "2026-11-28T13:52:19.320Z"
+    },
     {
       "id": "log-1795873448071",
       "user_id": null,
@@ -703,6 +781,28 @@
   ],
   "events": [
     {
+      "id": "E10-FCA4",
+      "name": "AI Agents Workshop",
+      "venue": "Auditorium A",
+      "event_date": "Dec 25, 2026",
+      "capacity": 120,
+      "status": "passive",
+      "description": "Organized by Test Attendee.",
+      "active_qr_code": "#EP-2026-5533-AB90",
+      "created_at": "2026-11-28T13:54:00.025Z"
+    },
+    {
+      "id": "E09-BB99",
+      "name": "AI Agents Workshop",
+      "venue": "Auditorium A",
+      "event_date": "Dec 25, 2026",
+      "capacity": 120,
+      "status": "passive",
+      "description": "Organized by Test Attendee.",
+      "active_qr_code": null,
+      "created_at": "2026-11-28T13:52:19.514Z"
+    },
+    {
       "id": "E08-B8F5",
       "name": "QUANTUM COMPUTING WORKSHOP",
       "venue": "Bengaluru Tech Park",
@@ -732,7 +832,7 @@
       "capacity": 200,
       "status": "passive",
       "description": "Live full-stack architecture and Liquid Glass UI evaluation with faculty mentors.",
-      "active_qr_code": "#EP-2026-7597-B6C3",
+      "active_qr_code": "#EP-2026-8585-031B",
       "created_at": "2026-11-28T13:24:20.732Z"
     },
     {
@@ -921,9 +1021,75 @@
       "meal_claimed_at": null,
       "duplicate_attempts": 1,
       "registered_at": "2026-11-28T13:31:49.425Z"
+    },
+    {
+      "ticket_id": "EP-V849-HVT8",
+      "event_id": "E02",
+      "full_name": "Test Attendee",
+      "email": "attendee_1795873939421@eventpass.edu",
+      "diet": "Veg",
+      "gate_checked_in": false,
+      "gate_checked_in_at": null,
+      "meal_claimed": false,
+      "meal_claimed_at": null,
+      "duplicate_attempts": 0,
+      "registered_at": "2026-11-28T13:52:19.532Z"
+    },
+    {
+      "ticket_id": "EP-EXPJ-K37R",
+      "event_id": "E10-FCA4",
+      "full_name": "Test Attendee",
+      "email": "attendee_1795874038322@eventpass.edu",
+      "diet": "Veg",
+      "gate_checked_in": true,
+      "gate_checked_in_at": "2026-11-28T13:54:00.039Z",
+      "meal_claimed": false,
+      "meal_claimed_at": null,
+      "duplicate_attempts": 1,
+      "registered_at": "2026-11-28T13:54:00.033Z"
     }
   ],
   "notifications": [
+    {
+      "id": "notif-1795874040042",
+      "user_email": "attendee_1795874038322@eventpass.edu",
+      "title": "Checked In: AI Agents Workshop",
+      "body": "Gate check-in verified (EP-EXPJ-K37R) at Auditorium A.",
+      "unread": false,
+      "created_at": "2026-11-28T13:54:00.042Z"
+    },
+    {
+      "id": "notif-1795874040035",
+      "user_email": "attendee_1795874038322@eventpass.edu",
+      "title": "Pass Issued: AI Agents Workshop",
+      "body": "Your ticket EP-EXPJ-K37R is confirmed for Auditorium A.",
+      "unread": false,
+      "created_at": "2026-11-28T13:54:00.035Z"
+    },
+    {
+      "id": "notif-1795874040028",
+      "user_email": "*",
+      "title": "New Event: AI Agents Workshop",
+      "body": "Dec 25, 2026 at Auditorium A. Registration is now open!",
+      "unread": false,
+      "created_at": "2026-11-28T13:54:00.028Z"
+    },
+    {
+      "id": "notif-1795873939533",
+      "user_email": "attendee_1795873939421@eventpass.edu",
+      "title": "Pass Issued: Bengaluru Student Hackathon",
+      "body": "Your ticket EP-V849-HVT8 is confirmed for Open Arena.",
+      "unread": false,
+      "created_at": "2026-11-28T13:52:19.533Z"
+    },
+    {
+      "id": "notif-1795873939515",
+      "user_email": "*",
+      "title": "New Event: AI Agents Workshop",
+      "body": "Dec 25, 2026 at Auditorium A. Registration is now open!",
+      "unread": false,
+      "created_at": "2026-11-28T13:52:19.515Z"
+    },
     {
       "id": "notif-1795872823455",
       "user_email": "*",
@@ -1029,6 +1195,22 @@
       "sender_role": "volunteer",
       "message": "Hi",
       "created_at": "2026-11-28T13:35:09.233Z"
+    },
+    {
+      "id": "chat-1795873939538",
+      "sender_name": "Test Attendee",
+      "sender_email": "attendee_1795873939421@eventpass.edu",
+      "sender_role": "attendee",
+      "message": "Hello Desk!",
+      "created_at": "2026-11-28T13:52:19.538Z"
+    },
+    {
+      "id": "chat-1795874040067",
+      "sender_name": "Test Attendee",
+      "sender_email": "attendee_1795874038322@eventpass.edu",
+      "sender_role": "attendee",
+      "message": "Hello Desk!",
+      "created_at": "2026-11-28T13:54:00.067Z"
     }
   ]
 }

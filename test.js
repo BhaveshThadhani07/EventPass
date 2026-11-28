@@ -162,19 +162,19 @@ async function run() {
     }
   });
 
-  await test('POST /api/events creates and toggles event for organizer only', async () => {
-    const reqAtt = mockReq({
+  let createdEventId = '';
+  await test('POST /api/events creates and toggles event for any authenticated user', async () => {
+    const reqUnauth = mockReq({
       method: 'POST',
-      headers: { authorization: `Bearer ${attendeeToken}` },
-      body: { name: 'Blocked Event', venue: 'Hall', date: 'Dec 25, 2026', capacity: 50 }
+      body: { name: 'Unauth Event', venue: 'Hall', date: 'Dec 25, 2026', capacity: 50 }
     });
-    const resAtt = mockRes();
-    await eventCreateHandler(reqAtt, resAtt);
-    if (resAtt.statusCode !== 403) throw new Error('Expected 403 for attendee');
+    const resUnauth = mockRes();
+    await eventCreateHandler(reqUnauth, resUnauth);
+    if (resUnauth.statusCode !== 401) throw new Error('Expected 401 for unauthenticated');
 
     const reqOrg = mockReq({
       method: 'POST',
-      headers: { authorization: `Bearer ${organizerToken}` },
+      headers: { authorization: `Bearer ${attendeeToken}` },
       body: { name: 'AI Agents Workshop', venue: 'Auditorium A', date: 'Dec 25, 2026', capacity: 120 }
     });
     const resOrg = mockRes();
@@ -182,34 +182,22 @@ async function run() {
     if (resOrg.statusCode !== 201 || !resOrg.body.event || resOrg.body.event.status !== 'active') {
       throw new Error('Expected 201 created active event');
     }
-
-    const reqStatus = mockReq({
-      method: 'POST',
-      params: { eventId: resOrg.body.event.id },
-      headers: { authorization: `Bearer ${organizerToken}` },
-      body: { status: 'passive' }
-    });
-    const resStatus = mockRes();
-    await eventStatusHandler(reqStatus, resStatus);
-    if (resStatus.statusCode !== 200 || resStatus.body.event.status !== 'passive') {
-      throw new Error('Expected passive status update');
-    }
+    createdEventId = resOrg.body.event.id;
   });
 
   let qrPayload = '';
-  await test('POST /api/events/E01/qr generates scannable QR for organizer only', async () => {
-    const reqAtt = mockReq({
+  await test('POST /api/events/:id/qr generates scannable QR for authenticated users', async () => {
+    const reqUnauth = mockReq({
       method: 'POST',
-      params: { eventId: 'E01' },
-      headers: { authorization: `Bearer ${attendeeToken}` }
+      params: { eventId: createdEventId }
     });
-    const resAtt = mockRes();
-    await eventQrHandler(reqAtt, resAtt);
-    if (resAtt.statusCode !== 403) throw new Error('Expected 403 for attendee');
+    const resUnauth = mockRes();
+    await eventQrHandler(reqUnauth, resUnauth);
+    if (resUnauth.statusCode !== 401) throw new Error('Expected 401 for unauthenticated');
 
     const reqOrg = mockReq({
       method: 'POST',
-      params: { eventId: 'E01' },
+      params: { eventId: createdEventId },
       headers: { authorization: `Bearer ${organizerToken}` }
     });
     const resOrg = mockRes();
@@ -221,7 +209,7 @@ async function run() {
   await test('POST /api/tickets/register issues pass and blocks duplicate', async () => {
     const req1 = mockReq({
       method: 'POST',
-      body: { eventId: 'E02', fullName: 'Test Attendee', email: newEmail }
+      body: { eventId: createdEventId, fullName: 'Test Attendee', email: newEmail }
     });
     const res1 = mockRes();
     await ticketRegisterHandler(req1, res1);
@@ -231,14 +219,14 @@ async function run() {
 
     const req2 = mockReq({
       method: 'POST',
-      body: { eventId: 'E02', fullName: 'Test Attendee', email: newEmail }
+      body: { eventId: createdEventId, fullName: 'Test Attendee', email: newEmail }
     });
     const res2 = mockRes();
     await ticketRegisterHandler(req2, res2);
     if (res2.statusCode !== 409) throw new Error('Expected 409 duplicate registration');
   });
 
-  await test('POST /api/tickets/checkin verifies Organizer QR and blocks duplicate', async () => {
+  await test('POST /api/tickets/checkin verifies Event QR and blocks duplicate', async () => {
     const req1 = mockReq({
       method: 'POST',
       headers: { authorization: `Bearer ${attendeeToken}` },
@@ -259,6 +247,18 @@ async function run() {
     await ticketCheckinHandler(req2, res2);
     if (res2.statusCode !== 409 || res2.body.resultStatus !== 'DUPLICATE') {
       throw new Error('Expected DUPLICATE check-in block');
+    }
+
+    const reqStatus = mockReq({
+      method: 'POST',
+      params: { eventId: createdEventId },
+      headers: { authorization: `Bearer ${attendeeToken}` },
+      body: { status: 'passive' }
+    });
+    const resStatus = mockRes();
+    await eventStatusHandler(reqStatus, resStatus);
+    if (resStatus.statusCode !== 200 || resStatus.body.event.status !== 'passive') {
+      throw new Error('Expected passive status update');
     }
   });
 
