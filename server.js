@@ -26,7 +26,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve frontend static assets (HTML, CSS, JS)
-app.use(express.static(path.join(__dirname)));
+const publicDir = path.join(__dirname, 'public');
+app.use(express.static(publicDir));
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -48,7 +49,7 @@ app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api')) {
     return res.status(404).json({ error: 'Endpoint not found' });
   }
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(publicDir, 'index.html'));
 });
 
 // Start Express Server
